@@ -1,0 +1,48 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "Engine\Engine.csproj", "{DB7FEACF-1F38-4611-BBEE-35A95E4E9294}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EngineImplementations", "EngineImplementations", "{639A8F1B-5EF0-4126-B5E6-6D6C42248854}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EngineImplementations.Godot", "EngineImplementations\EngineImplementations.Godot\EngineImplementations.Godot.csproj", "{B233EA14-27AD-4DE9-9BA2-03700C9671F2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Games", "Games", "{A8DF04AA-686F-4298-8B77-4DD48F6A3F0B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Games.Ring", "Games\Games.Ring\Games.Ring.csproj", "{580A48D9-1761-4001-B32D-E5A77B4EEDEE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils.Engine", "Utils.Engine\Utils.Engine.csproj", "{71A53D17-97EF-420A-B740-BA2E4FCAC865}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "Utils\Utils.csproj", "{E12E91D0-6310-443D-9EC3-6E4E4FAFDFB5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{DB7FEACF-1F38-4611-BBEE-35A95E4E9294}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DB7FEACF-1F38-4611-BBEE-35A95E4E9294}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DB7FEACF-1F38-4611-BBEE-35A95E4E9294}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DB7FEACF-1F38-4611-BBEE-35A95E4E9294}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B233EA14-27AD-4DE9-9BA2-03700C9671F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B233EA14-27AD-4DE9-9BA2-03700C9671F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B233EA14-27AD-4DE9-9BA2-03700C9671F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B233EA14-27AD-4DE9-9BA2-03700C9671F2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{580A48D9-1761-4001-B32D-E5A77B4EEDEE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{580A48D9-1761-4001-B32D-E5A77B4EEDEE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{580A48D9-1761-4001-B32D-E5A77B4EEDEE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{580A48D9-1761-4001-B32D-E5A77B4EEDEE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71A53D17-97EF-420A-B740-BA2E4FCAC865}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71A53D17-97EF-420A-B740-BA2E4FCAC865}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71A53D17-97EF-420A-B740-BA2E4FCAC865}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71A53D17-97EF-420A-B740-BA2E4FCAC865}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E12E91D0-6310-443D-9EC3-6E4E4FAFDFB5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E12E91D0-6310-443D-9EC3-6E4E4FAFDFB5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E12E91D0-6310-443D-9EC3-6E4E4FAFDFB5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E12E91D0-6310-443D-9EC3-6E4E4FAFDFB5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{B233EA14-27AD-4DE9-9BA2-03700C9671F2} = {639A8F1B-5EF0-4126-B5E6-6D6C42248854}
+		{580A48D9-1761-4001-B32D-E5A77B4EEDEE} = {A8DF04AA-686F-4298-8B77-4DD48F6A3F0B}
+	EndGlobalSection
+EndGlobal
