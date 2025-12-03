@@ -95,11 +95,6 @@ public class Engine
         E.Update += Update;
     }
 
-    // TODO: Consider removing
-    public void Popup(IEntity popup)
-    {
-    }
-
     private RootGroup InitGlobalRoot()
     {
         var root2D = E.Entities.E2D.Node();
