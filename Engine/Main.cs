@@ -109,7 +109,7 @@ public class Engine
 
 public class EssentialSettings
 {
-    public bool Debug { get; set; } = false;
+    public bool Debug { get; set; } = true;
 }
 
 public interface IGame
