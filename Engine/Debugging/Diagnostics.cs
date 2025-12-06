@@ -25,22 +25,14 @@ public static class Diagnostics
         }
         catch (TException e)
         {
-            if (Debug)
-            {
-                MessageTriggered?.Invoke(errorHandler(e));
-            }
-
+            if (Debug) MessageTriggered?.Invoke(errorHandler(e));
             return fallback();
         }
     }
 
     public static void Assert(bool condition, Func<DebugMessage> message)
     {
-        if (condition) return;
-        if (Debug)
-        {
-            MessageTriggered?.Invoke(message());
-        }
+        if (!condition && Debug) MessageTriggered?.Invoke(message());
     }
 }
 
