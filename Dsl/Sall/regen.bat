@@ -1,0 +1,1 @@
+antlr .\sall.g4 -Dlanguage=CSharp -visitor -no-listener -o .\generated\ -Xexact-output-dir
