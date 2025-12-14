@@ -17,13 +17,20 @@ classBodyOrTerminator: classBody | ';';
 classBody: '{' classBodyItem* '}';
 
 atom: '(' expr ')' | value;
-l1Expr: ('-' | '+' | '!')* atom;
-l2Expr: l1Expr (('*' | '/' | '%') l1Expr)*;
-l3Expr: l2Expr (('+' | '-') l2Expr)*;
-l4Expr: l3Expr (('<' | '>' | '==' | '!=') l3Expr)*;
-l5Expr: l4Expr ('&&' l4Expr)*;
-l6Expr: l5Expr ('||' l5Expr)*;
+l1Expr: l1Op* atom;
+l2Expr: l1Expr (l2Op l1Expr)*;
+l3Expr: l2Expr (l3Op l2Expr)*;
+l4Expr: l3Expr (l4Op l3Expr)*;
+l5Expr: l4Expr (l5Op l4Expr)*;
+l6Expr: l5Expr (l6Op l5Expr)*;
 expr: l6Expr;
+
+l1Op: '-' | '+' | '!';
+l2Op: '*' | '/' | '%';
+l3Op: '+' | '-';
+l4Op: '<' | '>' | '==' | '!=';
+l5Op: '&&';
+l6Op: '||';
 
 params: '(' paramList? ')';
 args: '(' expr (',' expr)* ','? ')';
