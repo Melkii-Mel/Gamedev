@@ -43,14 +43,11 @@ parent: IDENT args?;
 parentsList: parent (',' parent)* ','?;
 selector: (uiSelector | customSelector) stateMap? subSelector?;
 subSelector: (
-		(
-			uiSelector
-			| childrenSelector
-			| parentSelector
-			| siblingsSelector
-		) stateMap?
-	)
-	| stateMap;
+		uiSelector
+		| childrenSelector
+		| parentSelector
+		| siblingsSelector
+	) stateMap?;
 uiSelector: '@' '+'? IDENT;
 childrenSelector: '>' ('(' uintRange ')')?;
 parentSelector: '<' ('(' uintRange ')')?;
