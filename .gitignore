@@ -4,3 +4,5 @@
 bin/
 obj/
 generated/
+*.sln.DotSettings.user
+*.csproj.DotSettings.user
