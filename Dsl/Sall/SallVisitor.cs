@@ -72,7 +72,7 @@ public class SallVisitor
     public static UnaryOrAtomExpr VisitL1Expr(sallParser.L1ExprContext l1)
     {
         var atom = l1.atom();
-        IExprOrValue exprOrValue = atom.ChildCount == 3
+        ExprOrValue exprOrValue = atom.ChildCount == 3
             ? VisitExpr(atom.expr())
             : atom.value() switch
             {

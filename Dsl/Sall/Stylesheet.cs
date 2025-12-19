@@ -25,23 +25,19 @@ public enum UnOperation
 
 public record Stylesheet(Variable[] Variables, Class[] Classes);
 
-public interface IExpr;
+public abstract record ExprOrValue;
 
-public interface IUnaryOrAtomExpr : IExpr;
+public abstract record Expr : ExprOrValue;
 
-public interface IExprOrValue;
+public record BinaryExpr(BinOperation Operation, Expr Left, Expr Right) : Expr;
 
-public record Expr : IExpr, IExprOrValue;
+public record UnaryExpr(UnOperation Operation, UnaryOrAtomExpr Expr) : UnaryOrAtomExpr;
 
-public record BinaryExpr(BinOperation Operation, IExpr Left, IExpr Right) : Expr;
+public record AtomExpr(ExprOrValue ExprOrValue) : UnaryOrAtomExpr;
 
-public record UnaryExpr(UnOperation Operation, IUnaryOrAtomExpr Expr) : UnaryOrAtomExpr;
+public abstract record UnaryOrAtomExpr : Expr;
 
-public record AtomExpr(IExprOrValue ExprOrValue) : UnaryOrAtomExpr;
-
-public record UnaryOrAtomExpr : Expr, IUnaryOrAtomExpr;
-
-public abstract record Value : IExprOrValue;
+public abstract record Value : ExprOrValue;
 
 public abstract record Number : Value;
 
