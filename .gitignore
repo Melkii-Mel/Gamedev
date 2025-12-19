@@ -3,6 +3,7 @@
 .vs/
 bin/
 obj/
+.antlr/
 generated/
 *.sln.DotSettings.user
 *.csproj.DotSettings.user
