@@ -1,0 +1,29 @@
+﻿using Sall;
+using Utils.Tests;
+using Xunit.Abstractions;
+
+namespace TestProject1;
+
+public class Tests
+{
+    public ITestOutputHelper Output { get; }
+
+    public Tests(ITestOutputHelper output)
+    {
+        Output = output;
+    }
+
+    [Theory]
+    [InlineData("syntax.sall", "syntax.sall.txt")]
+    public void SnapshotTest(string inputFileName, string snapshotFileName)
+    {
+        var expected = DataAccess.ReadTestDataSnapshots(snapshotFileName);
+        var actual = ToAstString(inputFileName);
+        Assert.Equal(expected, actual);
+    }
+
+    private static string ToAstString(string inputFileName)
+    {
+        return Serializer.Serialize(SallVisitor.Visit(DataAccess.ReadTestDataInput(inputFileName)));
+    }
+}

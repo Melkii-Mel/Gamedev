@@ -1,0 +1,50 @@
+# Comments start with # 
+let example_constant = 14;
+# Computed variable. All parameters must have a default value
+let example_computed_variable(variable = 1) = variable * example_constant;
+
+example_class : example_parent_1, example_parent_2 {
+	width: 100px + 20%;
+	height: 20px;
+	font_size: 14px;
+	color: #389A44;
+}
+
+# All parameters must be typed
+# All parameters must have a default value
+# That is, all types are implicitly inferred
+example_parametrized_class(padding_multiplier = 1) : example_class {
+	padding_top: example_constant * padding_multiplier * 1px;
+	padding_bottom: padding_multiplier * 20px;
+}
+
+# You can skip the body (`{ }`) if the class doesn't have any properties
+eg_parametrized_class_inheritor: example_parametrized_class(2);
+
+# Applying to ui elements
+@button : example_class {
+	# Extend styling when clicked
+	[click]: example_click_class;
+}
+
+# Alternatively, you can define conditional styling outside
+@button[disabled]: example_disabled_class;
+
+# And that is also applicable to simple classes 
+# unrelated to specific ui elements
+# You can assign a value via expressions, use functions and variables
+simple_class_with_state[hover, arbitrary_property = 10 + 3 * 2] { }
+
+@panel {
+	# Apply to all panel children
+	> : example_panel_children_class {
+		translate_up: 3px;
+	}
+	# To the parent
+	< : parents { }
+	# To the siblings
+	- : parents { }
+}
+
+# Same as before
+@panel > : parents { }
