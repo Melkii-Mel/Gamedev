@@ -1,9 +1,10 @@
 ﻿using Gamedev.Entities;
+using Godot;
 using Silk.NET.Maths;
 
 namespace EngineImplementations.Godot.Components;
 
-public readonly struct CControl(global::Godot.Control control) : IControl
+public readonly struct CControl(Control control) : IControl
 {
     public Rectangle<float> Bounds
     {

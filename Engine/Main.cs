@@ -1,6 +1,7 @@
 ﻿using System;
 using Gamedev.Debugging;
 using Gamedev.Entities;
+using Gamedev.Localization;
 
 namespace Gamedev;
 
@@ -18,7 +19,7 @@ public static class Game
         where TGame : IGame, new()
     {
         EngineInstance.E = new Engine(engineImplementation);
-        Localization.LocalizationCore.InitFromFile("localization.csv");
+        LocalizationCore.InitFromFile("localization.csv");
         Diagnostics.MessageTriggered += message => EngineInstance.E.E.DebugOutput.Out(message);
         new TGame().Start();
     }
@@ -30,32 +31,41 @@ public static class EngineInstance
 }
 
 /// <summary>
-/// An interface acting as a bridge between the language-agnostic framework and specific engine implementations
+///     An interface acting as a bridge between the language-agnostic framework and specific engine implementations
 /// </summary>
 public interface IEngine
 {
+    public IEntities Entities { get; }
+    public EntityComponent<INode> Root { get; }
+    public IDebugOutput DebugOutput { get; }
+
     /// <summary>
-    /// An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be removed during the runtime
+    ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
+    ///     removed during the runtime
     /// </summary>
     public event Action<double>? Update;
 
     /// <summary>
-    /// An event that should be invoked on each Physics Update of the root entity, which is the entity that is not supposed to be removed during the runtime
+    ///     An event that should be invoked on each Physics Update of the root entity, which is the entity that is not supposed
+    ///     to be removed during the runtime
     /// </summary>
     public event Action<double>? PhysicsUpdate;
 
     // TODO: Consider removing
     public void Spawn(IEntity entity, IEntity parent);
-    public IEntities Entities { get; }
-    public EntityComponent<INode> Root { get; }
-    public IDebugOutput DebugOutput { get; }
 }
 
 /// <summary>
-/// An interface for initializing common Entities in different engines.
+///     An interface for initializing common Entities in different engines.
 /// </summary>
 public interface IEntities
 {
+    public IUi Ui { get; }
+    public I2D E2D { get; }
+    public I3D E3D { get; }
+
+    public EntityComponent<INode> Node();
+
     public interface IUi
     {
         public EntityComponent<IControl> Control();
@@ -71,29 +81,24 @@ public interface IEntities
     {
         public EntityComponent<INode3D> Node();
     }
-
-    public EntityComponent<INode> Node();
-    public IUi Ui { get; }
-    public I2D E2D { get; }
-    public I3D E3D { get; }
 }
 
 public class Engine
 {
-    public IEngine E { get; }
-    public event Action<double>? Update;
-    public RootGroup Scene { get; }
-    public IEntities Entities => E.Entities;
-    
-    public IDebugOutput DebugOutput => E.DebugOutput;
-    public EssentialSettings EssentialSettings { get; } = new();
-
     public Engine(IEngine engine)
     {
         E = engine;
         Scene = InitGlobalRoot();
         E.Update += Update;
     }
+
+    public IEngine E { get; }
+    public RootGroup Scene { get; }
+    public IEntities Entities => E.Entities;
+
+    public IDebugOutput DebugOutput => E.DebugOutput;
+    public EssentialSettings EssentialSettings { get; } = new();
+    public event Action<double>? Update;
 
     private RootGroup InitGlobalRoot()
     {

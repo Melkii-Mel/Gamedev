@@ -69,9 +69,9 @@ public class Entities : IEntities
 
 public class Entity(Node node) : IEntity
 {
+    private readonly Node _node = node;
     public event Action<IEntity>? ChildAdded;
     public event Action<IEntity>? ChildRemoved;
-    private readonly Node _node = node;
 
     public void AddChild(IEntity entity)
     {
@@ -95,16 +95,10 @@ public class Entity(Node node) : IEntity
     public IEnumerable<IEntity> GetChildren()
     {
         foreach (var child in _node.GetChildren())
-        {
             if (child is Node node1)
-            {
                 yield return new Entity(node1);
-            }
             else
-            {
                 GD.PushWarning("One of node's children is not a Node.");
-            }
-        }
     }
 
     public void Free()

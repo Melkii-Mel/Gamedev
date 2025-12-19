@@ -14,7 +14,7 @@ public class Game : IGame
             (MenuAction.Start, m => m.PushScene(() => GenericMenus.LevelSelectMenu(Levels()))),
             (MenuAction.Settings, m => m.PushScene(GenericMenus.DefaultSettings2D)),
             (MenuAction.Quit, m => m.Popup(GenericMenus.ExitConfirmation)),
-        ]/*, style = "main-menu", layout = "main-menu"*/));
+        ] /*, style = "main-menu", layout = "main-menu"*/));
     }
 
     public List<GenericMenus.ILevel> Levels()

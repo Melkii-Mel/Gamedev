@@ -32,10 +32,7 @@ public static class Csv
             var rowKey = values[0];
             var rowDict = new Dictionary<string, string>();
 
-            for (var i = 1; i < headers.Length && i < values.Length; i++)
-            {
-                rowDict[headers[i]] = values[i];
-            }
+            for (var i = 1; i < headers.Length && i < values.Length; i++) rowDict[headers[i]] = values[i];
 
             result[rowKey] = rowDict;
         }

@@ -11,39 +11,11 @@ namespace Utils.Engine;
 
 public static class MenuUtils
 {
-    public record MenuData(string Name);
-
     public enum MenuAction
     {
         Start,
         Settings,
-        Quit
-    }
-
-    public static class GenericMenus
-    {
-        public interface ILevel;
-
-        public static SceneRoot LevelSelectMenu(IEnumerable<ILevel> levels)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static SceneRoot LevelSelectMenu<TLevel>(IEnumerable<TLevel> levels,
-            Func<TLevel, IControl> levelDisplayOverride) where TLevel : ILevel
-        {
-            throw new NotImplementedException();
-        }
-
-        public static SceneRoot DefaultSettings2D()
-        {
-            throw new NotImplementedException();
-        }
-
-        public static SceneRoot ExitConfirmation()
-        {
-            throw new NotImplementedException();
-        }
+        Quit,
     }
 
     public static readonly ReadOnlyDictionary<MenuAction, MenuData> MenuActionDefaults = new(
@@ -51,7 +23,7 @@ public static class MenuUtils
         {
             { MenuAction.Start, new MenuData("Start") },
             { MenuAction.Settings, new MenuData("Settings") },
-            { MenuAction.Quit, new MenuData("Quit") }
+            { MenuAction.Quit, new MenuData("Quit") },
         });
 
     public static SceneRoot Menu(IEnumerable<(MenuAction, Action<SceneRoot>)> menuActions)
@@ -76,5 +48,33 @@ public static class MenuUtils
             return rootControl.Entity;
         });
         return sceneRoot;
+    }
+
+    public record MenuData(string Name);
+
+    public static class GenericMenus
+    {
+        public static SceneRoot LevelSelectMenu(IEnumerable<ILevel> levels)
+        {
+            throw new NotImplementedException();
+        }
+
+        public static SceneRoot LevelSelectMenu<TLevel>(IEnumerable<TLevel> levels,
+            Func<TLevel, IControl> levelDisplayOverride) where TLevel : ILevel
+        {
+            throw new NotImplementedException();
+        }
+
+        public static SceneRoot DefaultSettings2D()
+        {
+            throw new NotImplementedException();
+        }
+
+        public static SceneRoot ExitConfirmation()
+        {
+            throw new NotImplementedException();
+        }
+
+        public interface ILevel;
     }
 }

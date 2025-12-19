@@ -6,12 +6,12 @@ namespace TestProject1;
 
 public class Tests
 {
-    public ITestOutputHelper Output { get; }
-
     public Tests(ITestOutputHelper output)
     {
         Output = output;
     }
+
+    public ITestOutputHelper Output { get; }
 
     [Theory]
     [InlineData("syntax.sall", "syntax.sall.txt")]

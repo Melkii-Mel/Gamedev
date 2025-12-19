@@ -36,12 +36,10 @@ public interface IControl
 
 public interface INode2D
 {
-    
 }
 
 public interface INode3D
 {
-    
 }
 
 public interface INode;

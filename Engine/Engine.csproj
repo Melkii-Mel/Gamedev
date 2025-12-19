@@ -8,8 +8,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Silk.NET.Maths" Version="2.22.0" />
-        <ProjectReference Include="..\Utils\Utils.csproj" />
+        <PackageReference Include="Silk.NET.Maths" Version="2.22.0"/>
+        <ProjectReference Include="..\Utils\Utils.csproj"/>
     </ItemGroup>
 
 </Project>

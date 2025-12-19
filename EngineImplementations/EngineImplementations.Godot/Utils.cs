@@ -8,10 +8,7 @@ public static class Utils
 {
     public static T As<T>(object obj)
     {
-        if (obj is not T t)
-        {
-            throw new NotSupportedException($"Can't cast object to target type {typeof(T).Name}.");
-        }
+        if (obj is not T t) throw new NotSupportedException($"Can't cast object to target type {typeof(T).Name}.");
 
         return t;
     }

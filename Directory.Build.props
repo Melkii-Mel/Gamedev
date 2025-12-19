@@ -1,5 +1,5 @@
 <Project>
-  <PropertyGroup>
-    <Configuration Condition="'$(Configuration)' == 'ExportRelease'">Release</Configuration>
-  </PropertyGroup>
+    <PropertyGroup>
+        <Configuration Condition="'$(Configuration)' == 'ExportRelease'">Release</Configuration>
+    </PropertyGroup>
 </Project>

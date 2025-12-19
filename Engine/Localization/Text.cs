@@ -2,11 +2,27 @@
 using System.Collections.Generic;
 using System.Linq;
 using Gamedev.Debugging;
+using Utils.FileParsing;
 
 namespace Gamedev.Localization;
 
 public class LocalizationCore
 {
+    private static LocalizationCore? _instance;
+
+    private static LocalizationCore Instance
+    {
+        get
+        {
+            Diagnostics.Assert(_instance != null,
+                () => new DebugMessage(MessageType.Error,
+                    "Localizations.Instance is null. Initialize Localizations using Localizations.Init static function. Localizations will be initialized with an empty default value"));
+            return _instance ?? Init(new Dictionary<string, Dictionary<string, string>>(), "en");
+        }
+    }
+
+    internal static event Action? OnUpdate;
+
     #region api
 
     public Dictionary<string, Dictionary<string, string>> Localization;
@@ -20,7 +36,7 @@ public class LocalizationCore
 
     public static void InitFromFile(string csvLocation, string? defaultLanguage = null)
     {
-        var localization = Diagnostics.Try(() => Utils.FileParsing.Csv.Load(csvLocation),
+        var localization = Diagnostics.Try(() => Csv.Load(csvLocation),
             (Exception e) => new DebugMessage(MessageType.Error,
                 $"Failed to load localization file, localization will be initialized with an empty fallback value: {e.Message}"),
             () => DefaultLocalization);
@@ -30,7 +46,7 @@ public class LocalizationCore
     private static readonly Dictionary<string, Dictionary<string, string>> DefaultLocalization =
         new()
         {
-            ["en"] = new Dictionary<string, string>()
+            ["en"] = new Dictionary<string, string>(),
         };
 
     public static LocalizationCore Init(Dictionary<string, Dictionary<string, string>> localization,
@@ -69,21 +85,6 @@ public class LocalizationCore
     }
 
     #endregion
-
-    private static LocalizationCore? _instance;
-
-    private static LocalizationCore Instance
-    {
-        get
-        {
-            Diagnostics.Assert(_instance != null,
-                () => new DebugMessage(MessageType.Error,
-                    "Localizations.Instance is null. Initialize Localizations using Localizations.Init static function. Localizations will be initialized with an empty default value"));
-            return _instance ?? Init(new Dictionary<string, Dictionary<string, string>>(), "en");
-        }
-    }
-
-    internal static event Action? OnUpdate;
 }
 
 public class Text

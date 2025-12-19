@@ -12,14 +12,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="assemblies\**" />
-        <Compile Remove="assemblies\**" />
+        <None Remove="assemblies\**"/>
+        <Compile Remove="assemblies\**"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Reference Include="GodotSharp">
-        <HintPath>..\..\vendors\godot\assemblies\Debug\GodotSharp.dll</HintPath>
-      </Reference>
+        <Reference Include="GodotSharp">
+            <HintPath>..\..\vendors\godot\assemblies\Debug\GodotSharp.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>

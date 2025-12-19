@@ -7,9 +7,8 @@ namespace EngineImplementations.Godot.Components;
 
 public class CButton(Button button) : IButton
 {
-    public IControl Control => new CControl(button);
-
     private Text? _text;
+    public IControl Control => new CControl(button);
 
     public Text? Text
     {

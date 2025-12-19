@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\..\Engine\Engine.csproj" />
-      <ProjectReference Include="..\..\Utils.Engine\Utils.Engine.csproj" />
+        <ProjectReference Include="..\..\Engine\Engine.csproj"/>
+        <ProjectReference Include="..\..\Utils.Engine\Utils.Engine.csproj"/>
     </ItemGroup>
 
 </Project>

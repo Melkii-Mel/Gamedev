@@ -25,16 +25,9 @@ public class SallVisitor
         List<Class> classes = [];
 
         foreach (var s in context.statement())
-        {
             if (s.variable() != null)
-            {
                 variables.Add(VisitVariable(s.variable()));
-            }
-            else if (s.classDef() != null)
-            {
-                classes.Add(VisitClassDef(s.classDef()));
-            }
-        }
+            else if (s.classDef() != null) classes.Add(VisitClassDef(s.classDef()));
 
         return new Stylesheet(variables.ToArray(), classes.ToArray());
     }
@@ -59,10 +52,7 @@ public class SallVisitor
 
         Expr VisitBinRecursive(ParserRuleContext ctx, List<Func<ParserRuleContext, ParserRuleContext>> chain, int level)
         {
-            if (level == chain.Count)
-            {
-                return VisitL1Expr((sallParser.L1ExprContext)ctx);
-            }
+            if (level == chain.Count) return VisitL1Expr((sallParser.L1ExprContext)ctx);
 
             var getNext = chain[level];
             var left = VisitBinRecursive(getNext(ctx), chain, level + 1);
@@ -167,14 +157,20 @@ public class SallVisitor
             SubClasses(classBody?.classBodyItem().Select(cbi => cbi.subClassDef()).Where(scd => scd != null) ?? [])
         );
 
-        Parent[] Parents(sallParser.ParentContext[] ctx) =>
-            ctx.Select(p => new Parent(p.IDENT().GetText(), VisitArgs(p.args()))).ToArray();
+        Parent[] Parents(sallParser.ParentContext[] ctx)
+        {
+            return ctx.Select(p => new Parent(p.IDENT().GetText(), VisitArgs(p.args()))).ToArray();
+        }
 
-        Property[] Properties(IEnumerable<sallParser.PropertyContext> ctx) =>
-            ctx.Select(p => new Property(p.IDENT().GetText(), VisitExpr(p.expr()))).ToArray();
+        Property[] Properties(IEnumerable<sallParser.PropertyContext> ctx)
+        {
+            return ctx.Select(p => new Property(p.IDENT().GetText(), VisitExpr(p.expr()))).ToArray();
+        }
 
-        Class[] SubClasses(IEnumerable<sallParser.SubClassDefContext> ctx) =>
-            ctx.Select(sc => VisitClassDef(SubSelector(sc.subSelector()), sc.classContent())).ToArray();
+        Class[] SubClasses(IEnumerable<sallParser.SubClassDefContext> ctx)
+        {
+            return ctx.Select(sc => VisitClassDef(SubSelector(sc.subSelector()), sc.classContent())).ToArray();
+        }
 
         Selector SubSelector(sallParser.SubSelectorContext subSelector)
         {

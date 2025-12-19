@@ -7,21 +7,27 @@ public readonly record struct Color(float R, float G, float B, float A)
 {
     #region parsing
 
-    public static Color ParseRgba(string s) => ParseInternal(s, true);
+    public static Color ParseRgba(string s)
+    {
+        return ParseInternal(s, true);
+    }
 
-    public static Color ParseRgb(string s) => ParseInternal(s, false);
+    public static Color ParseRgb(string s)
+    {
+        return ParseInternal(s, false);
+    }
 
-    public static Color ParseSmart(string s) => ParseInternal(s, s.Length > 7);
+    public static Color ParseSmart(string s)
+    {
+        return ParseInternal(s, s.Length > 7);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static Color ParseInternal(string s, bool isA)
     {
         var i = s[0] == '#' ? 1 : 0;
 
-        if (s.Length - i != (isA ? 8 : 6))
-        {
-            throw new FormatException(isA ? "Expected RRGGBBAA" : "Expected RRGGBB");
-        }
+        if (s.Length - i != (isA ? 8 : 6)) throw new FormatException(isA ? "Expected RRGGBBAA" : "Expected RRGGBB");
 
 
         var r = Channel(s, i, 0);
