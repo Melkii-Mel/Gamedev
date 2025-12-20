@@ -1,6 +1,6 @@
-﻿#nullable enable
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Antlr4.Runtime;
 
@@ -76,14 +76,15 @@ public class SallVisitor
             ? VisitExpr(atom.expr())
             : atom.value() switch
             {
-                var c when c.NUMBER() != null => new Double(
-                    double.Parse(c.NUMBER().GetText())),
+                var c when c.@float() != null => new Double(
+                    double.Parse(string.Join("", c.@float().children), CultureInfo.InvariantCulture)),
                 var c when c.IDENT() != null => new VariableRef(c.IDENT().GetText()),
                 var c when c.COLOR() != null => new Color(
                     Primitives.Color.ParseSmart(c.COLOR().GetText())
                 ),
                 var c when c.call() != null => new Call(c.call().IDENT().GetText(), VisitArgs(c.call().args())),
-                var c when c.sizeValue() != null => new Size(double.Parse(c.sizeValue().NUMBER().GetText()),
+                var c when c.sizeValue() != null => new Size(
+                    double.Parse(string.Join("", c.sizeValue().@float().children), CultureInfo.InvariantCulture),
                     c.sizeValue().UNIT().GetText() switch
                     {
                         "px" => SizeUnit.Px,
@@ -94,6 +95,7 @@ public class SallVisitor
                         "vw" => SizeUnit.Vw,
                         _ => throw new ArgumentOutOfRangeException(),
                     }),
+                var c when c.@uint() != null => new Uint(uint.Parse(c.@uint().DIGITS().GetText())),
                 _ => throw new ArgumentOutOfRangeException(),
             };
 

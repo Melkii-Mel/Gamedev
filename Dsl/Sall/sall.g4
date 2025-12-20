@@ -58,9 +58,12 @@ state: stateKvp | IDENT;
 stateKvp: IDENT '=' expr;
 
 call: IDENT args;
-value: NUMBER | sizeValue | IDENT | COLOR | call;
-sizeValue: NUMBER UNIT;
-uintRange: UINT ('..' UNIT)?;
+value: uint | float | sizeValue | IDENT | COLOR | call;
+sizeValue: float UNIT;
+uintRange: uint ('..' uint)?;
+
+uint: DIGITS;
+float: DIGITS '.'? DIGITS? | '.' DIGITS;
 
 /*
  * LEXER
@@ -88,18 +91,17 @@ NEQ: '!=';
 AND: '&&';
 OR: '||';
 AT: '@';
+DOT: '.';
 
 COLOR:
 	'#' HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT HEX_DIGIT;
-NUMBER: DIGITS '.'? DIGITS? | '.' DIGITS;
-UINT: DIGITS;
 UNIT: ('px' | '%' | 'em' | 'rem' | 'vh' | 'vw');
 
 PERCENT: '%';
 
 IDENT: [a-zA-Z_][a-zA-Z0-9_]*;
 
-fragment DIGITS: [0-9]+;
+DIGITS: [0-9]+;
 fragment HEX_DIGIT: [0-9A-Fa-f];
 
 WSNL: [ \t\r\n]+ -> skip;

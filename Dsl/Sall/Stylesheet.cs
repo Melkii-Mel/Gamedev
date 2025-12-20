@@ -39,6 +39,8 @@ public abstract record UnaryOrAtomExpr : Expr;
 
 public abstract record Value : ExprOrValue;
 
+public record Bool(bool Value) : Value;
+
 public abstract record Number : Value;
 
 public record Uint(uint Value) : Number;
