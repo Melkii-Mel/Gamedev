@@ -96,6 +96,7 @@ public class SallVisitor
                         _ => throw new ArgumentOutOfRangeException(),
                     }),
                 var c when c.@uint() != null => new Uint(uint.Parse(c.@uint().DIGITS().GetText())),
+                var c when c.@bool() != null => new Bool(bool.Parse(c.@bool().GetText())),
                 _ => throw new ArgumentOutOfRangeException(),
             };
 

@@ -58,18 +58,22 @@ state: stateKvp | IDENT;
 stateKvp: IDENT '=' expr;
 
 call: IDENT args;
-value: uint | float | sizeValue | IDENT | COLOR | call;
+value: uint | float | sizeValue | IDENT | COLOR | call | bool;
 sizeValue: float UNIT;
 uintRange: uint ('..' uint)?;
 
 uint: DIGITS;
 float: DIGITS '.'? DIGITS? | '.' DIGITS;
+bool: TRUE | FALSE;
 
 /*
  * LEXER
  */
 
 LET: 'let';
+TRUE: 'true';
+FALSE: 'false';
+
 RANGE: '..';
 ASSIGN: '=';
 SEMICOLON: ';';
