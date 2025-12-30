@@ -6,12 +6,12 @@ grammar sall;
 
 file: statement*;
 
-statement: variable | classDef;
+statement: variable | namedClassDef | anonymousClassDef;
 
 variable: 'let' IDENT params? '=' expr ';';
 
-classDef: selector classContent;
-subClassDef: subSelector classContent;
+namedClassDef: className classContent;
+anonymousClassDef: selectorExpr classContent;
 classContent: (':' parentsList)? classBodyOrTerminator;
 classBodyOrTerminator: classBody | ';';
 classBody: '{' classBodyItem* '}';
@@ -32,35 +32,53 @@ l4Op: '<' | '>' | '==' | '!=';
 l5Op: '&&';
 l6Op: '||';
 
+selectorAtom: '(' selectorExpr ')' | selector;
+l1Sel: l1SelOp* selectorAtom;
+l2Sel: l1Sel (l2SelOp l1Sel)*;
+l3Sel: l2Sel (l3SelOp l2Sel)*;
+l4Sel: l3Sel+;
+selectorExpr: l4Sel;
+
+l1SelOp: '!';
+l2SelOp: '&&';
+l3SelOp: '||';
+
 params: '(' paramList? ')';
 args: '(' expr (',' expr)* ','? ')';
 
-classBodyItem: property ';' | subClassDef;
+classBodyItem: property ';' | anonymousClassDef;
+classNameOrSelectorExpr: className | selectorExpr;
 property: IDENT ':' expr;
 paramList: param (',' param)* ','?;
 param: IDENT '=' expr;
 parent: IDENT args?;
+className: IDENT params?;
 parentsList: parent (',' parent)* ','?;
-selector: (uiSelector | customSelector) stateMap? subSelector?;
-subSelector: (
-		uiSelector
-		| childrenSelector
-		| parentSelector
-		| siblingsSelector
-	) stateMap?;
-uiSelector: '@' '+'? IDENT;
-childrenSelector: '>' ('(' uintRange ')')?;
-parentSelector: '<' ('(' uintRange ')')?;
-siblingsSelector: '-' ('(' uintRange ',' uintRange ')')?;
-customSelector: IDENT params?;
-stateMap: '[' state? (',' state)* ','? ']';
+selector: uiSelector | markerSelector | stateMapSelector | axesSelector | sliceSelector | reverseSelector | uniqueSelector;
+axesSelector: childrenSelector | parentSelector | leftSiblingsSelector | rightSiblingsSelector;
+uiSelector: '@' IDENT;
+childrenSelector: '>' sliceSelector?;
+parentSelector: '<';
+reverseSelector: '~';
+uniqueSelector: '#';
+leftSiblingsSelector: '-' sliceSelector?;
+rightSiblingsSelector: '+' sliceSelector?;
+stateMapSelector: '[' state? (',' state)* ','? ']';
+sliceSelector: '[[' range ']]';
+markerSelector: IDENT;
 state: stateKvp | IDENT;
-stateKvp: IDENT '=' expr;
+stateKvp: IDENT comp expr;
+
+comp: EQ | NEQ | LESS | GREATER | LE | GE;
 
 call: IDENT args;
 value: uint | float | sizeValue | IDENT | COLOR | call | bool;
 sizeValue: float UNIT;
-uintRange: uint ('..' uint)?;
+range: boundedRange | rightUnboundedRange | leftUnboundedRange | pointRange;
+boundedRange: expr '..' expr;
+rightUnboundedRange: expr '..';
+leftUnboundedRange: '..' expr;
+pointRange: expr;
 
 uint: DIGITS;
 float: DIGITS '.'? DIGITS? | '.' DIGITS;
@@ -73,6 +91,9 @@ bool: TRUE | FALSE;
 LET: 'let';
 TRUE: 'true';
 FALSE: 'false';
+DLBRACK: '[[';
+DRBRACK: ']]';
+INLINE_COMMENT_SCOPE: '##';
 
 RANGE: '..';
 ASSIGN: '=';
@@ -81,6 +102,8 @@ LBRACE: '{';
 RBRACE: '}';
 LPAREN: '(';
 RPAREN: ')';
+LBRACK: '[';
+RBRACK: ']';
 MINUS: '-';
 PLUS: '+';
 STAR: '*';
@@ -90,8 +113,10 @@ EXCLAMATION: '!';
 SLASH: '/';
 LESS: '<';
 GREATER: '>';
+LE: '>=';
+GE: '<=';
 EQ: '==';
-NEQ: '!=';
+NEQ: '!=' | '<>';
 AND: '&&';
 OR: '||';
 AT: '@';
@@ -109,5 +134,7 @@ DIGITS: [0-9]+;
 fragment HEX_DIGIT: [0-9A-Fa-f];
 
 WSNL: [ \t\r\n]+ -> skip;
+NL: [\r\n]+ -> skip;
 WS: [ \t]+ -> skip;
-COMMENT: '#' WS ~[\r\n]* -> skip;
+COMMENT: '//' ~[\r\n]* -> skip;
+INLINE_COMMENT: '/*' (.|[\r\n])*? '*/' -> skip;

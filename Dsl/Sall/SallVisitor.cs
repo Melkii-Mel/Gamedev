@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using Antlr4.Runtime;
+using Antlr4.Runtime.Tree;
 
 namespace Sall;
 
@@ -22,14 +23,26 @@ public class SallVisitor
     public static Stylesheet VisitFile(sallParser.FileContext context)
     {
         List<Variable> variables = [];
-        List<Class> classes = [];
+        List<AnonymousClass> anonymousClasses = [];
+        List<NamedClass> namedClasses = [];
 
         foreach (var s in context.statement())
+        {
             if (s.variable() != null)
+            {
                 variables.Add(VisitVariable(s.variable()));
-            else if (s.classDef() != null) classes.Add(VisitClassDef(s.classDef()));
+            }
+            else if (s.anonymousClassDef() != null)
+            {
+                anonymousClasses.Add(VisitAnonymousClassDef(s.anonymousClassDef()));
+            }
+            else if (s.namedClassDef() != null)
+            {
+                namedClasses.Add(VisitNamedClassDef(s.namedClassDef()));
+            }
+        }
 
-        return new Stylesheet(variables.ToArray(), classes.ToArray());
+        return new Stylesheet(variables.ToArray(), anonymousClasses.ToArray(), namedClasses.ToArray());
     }
 
     public static Variable VisitVariable(sallParser.VariableContext context)
@@ -48,70 +61,52 @@ public class SallVisitor
             ctx => ((sallParser.L2ExprContext)ctx).l1Expr(0),
         };
 
-        return VisitBinRecursive(context.l6Expr(), precedenceChain, 0);
-
-        Expr VisitBinRecursive(ParserRuleContext ctx, List<Func<ParserRuleContext, ParserRuleContext>> chain, int level)
-        {
-            if (level == chain.Count) return VisitL1Expr((sallParser.L1ExprContext)ctx);
-
-            var getNext = chain[level];
-            var left = VisitBinRecursive(getNext(ctx), chain, level + 1);
-
-            for (var i = 1; i < ctx.ChildCount; i += 2)
-            {
-                var opNode = ctx.GetChild(i);
-                var rightNode = ctx.GetChild(i + 1);
-                var right = VisitBinRecursive((ParserRuleContext)rightNode, chain, level + 1);
-                left = new BinaryExpr(OperatorMap.BinOperations[opNode.GetText()], left, right);
-            }
-
-            return left;
-        }
+        return VisitBinRecursive<Expr>(context.l6Expr(), precedenceChain,
+            ctx => VisitL1Expr((sallParser.L1ExprContext)ctx),
+            (s, l, r) => new BinaryExpr(OperatorMap.BinOperations[s], l, r));
     }
 
     public static UnaryOrAtomExpr VisitL1Expr(sallParser.L1ExprContext l1)
     {
-        var atom = l1.atom();
-        ExprOrValue exprOrValue = atom.ChildCount == 3
-            ? VisitExpr(atom.expr())
-            : atom.value() switch
-            {
-                var c when c.@float() != null => new Double(
-                    double.Parse(string.Join("", c.@float().children), CultureInfo.InvariantCulture)),
-                var c when c.IDENT() != null => new VariableRef(c.IDENT().GetText()),
-                var c when c.COLOR() != null => new Color(
-                    Primitives.Color.ParseSmart(c.COLOR().GetText())
-                ),
-                var c when c.call() != null => new Call(c.call().IDENT().GetText(), VisitArgs(c.call().args())),
-                var c when c.sizeValue() != null => new Size(
-                    double.Parse(string.Join("", c.sizeValue().@float().children), CultureInfo.InvariantCulture),
-                    c.sizeValue().UNIT().GetText() switch
-                    {
-                        "px" => SizeUnit.Px,
-                        "%" => SizeUnit.Percent,
-                        "em" => SizeUnit.Em,
-                        "rem" => SizeUnit.Rem,
-                        "vh" => SizeUnit.Vh,
-                        "vw" => SizeUnit.Vw,
-                        _ => throw new ArgumentOutOfRangeException(),
-                    }),
-                var c when c.@uint() != null => new Uint(uint.Parse(c.@uint().DIGITS().GetText())),
-                var c when c.@bool() != null => new Bool(bool.Parse(c.@bool().GetText())),
-                _ => throw new ArgumentOutOfRangeException(),
-            };
+        return VisitUnRecursive<UnaryOrAtomExpr, UnaryOperation, sallParser.L1OpContext, AtomExpr>(
+            VisitAtomExpr(l1.atom()), l1.l1Op(), [c => c.PLUS() == null], OperatorMap.UnOperations,
+            (op, c) => new UnaryExpr(op, c));
+    }
 
-        var atomExpr = new AtomExpr(exprOrValue);
+    public static AtomExpr VisitAtomExpr(sallParser.AtomContext ctx)
+    {
+        return new AtomExpr(VisitAtom<sallParser.AtomContext, ExprOrValue, Expr, Value>(ctx, c => VisitExpr(c.expr()),
+            c => VisitValue(c.value())));
+    }
 
-        return l1.l1Op()
-            .Reverse()
-            .Where(l1Op => l1Op.PLUS() == null)
-            .Aggregate<sallParser.L1OpContext, UnaryOrAtomExpr>(atomExpr, (current, l1Op) =>
-                new UnaryExpr(l1Op switch
+    public static Value VisitValue(sallParser.ValueContext c)
+    {
+        return c switch
+        {
+            _ when c.@float() != null => new Double(
+                double.Parse(string.Join("", c.@float().children), CultureInfo.InvariantCulture)),
+            _ when c.IDENT() != null => new VariableRef(c.IDENT().GetText()),
+            _ when c.COLOR() != null => new Color(
+                Primitives.Color.ParseSmart(c.COLOR().GetText())
+            ),
+            _ when c.call() != null => new Call(c.call().IDENT().GetText(),
+                VisitArgs(c.call().args())),
+            _ when c.sizeValue() != null => new Size(
+                double.Parse(string.Join("", c.sizeValue().@float().children), CultureInfo.InvariantCulture),
+                c.sizeValue().UNIT().GetText() switch
                 {
-                    _ when l1Op.MINUS() != null => UnOperation.Negative,
-                    _ when l1Op.EXCLAMATION() != null => UnOperation.Not,
+                    "px" => SizeUnit.Px,
+                    "%" => SizeUnit.Percent,
+                    "em" => SizeUnit.Em,
+                    "rem" => SizeUnit.Rem,
+                    "vh" => SizeUnit.Vh,
+                    "vw" => SizeUnit.Vw,
                     _ => throw new ArgumentOutOfRangeException(),
-                }, current));
+                }),
+            _ when c.@uint() != null => new Uint(uint.Parse(c.@uint().DIGITS().GetText())),
+            _ when c.@bool() != null => new Bool(bool.Parse(c.@bool().GetText())),
+            _ => throw new ArgumentOutOfRangeException(),
+        };
     }
 
     public static Args VisitArgs(sallParser.ArgsContext? context)
@@ -121,43 +116,110 @@ public class SallVisitor
             .ToArray() ?? []);
     }
 
-    public static Class VisitClassDef(sallParser.ClassDefContext context)
+    public static SelectorChain VisitSelectorExpr(sallParser.SelectorExprContext ctx)
     {
-        return VisitClassDef(Selector(context.selector()), context.classContent());
-
-        Selector Selector(sallParser.SelectorContext ctx)
+        var precedenceChain = new List<Func<ParserRuleContext, ParserRuleContext>>
         {
-            var stateMap = VisitStateMap(ctx.stateMap());
-            return ctx switch
-            {
-                _ when ctx.uiSelector() != null => VisitUiSelector(ctx.uiSelector(), stateMap),
-                _ when ctx.customSelector() != null => new CustomSelector(ctx.customSelector().IDENT().GetText(),
-                    VisitParams(ctx.customSelector().@params()), stateMap),
-                _ => throw new ArgumentOutOfRangeException(nameof(ctx), ctx, null),
-            };
-        }
+            c => ((sallParser.L3SelContext)c).l2Sel(0),
+            c => ((sallParser.L2SelContext)c).l1Sel(0),
+        };
+
+        return new SelectorChain(ctx.l4Sel().l3Sel().Select(c =>
+            VisitBinRecursive<SelectorExpr>(c, precedenceChain, prc => VisitL1Selector((sallParser.L1SelContext)prc),
+                (s, l, r) => new BinarySelectorExpr(OperatorMap.BinSelectorOperations[s], l, r))).ToArray());
     }
 
-    public static UiSelector VisitUiSelector(sallParser.UiSelectorContext ctx, State[] stateMap)
+    public static UnaryOrAtomSelectorExpr VisitL1Selector(sallParser.L1SelContext ctx)
     {
-        return new UiSelector(ctx.IDENT().GetText(), stateMap);
+        return VisitUnRecursive<UnaryOrAtomSelectorExpr, UnarySelectorOperation, sallParser.L1SelOpContext,
+            AtomSelectorExpr>(
+            VisitAtomSelector(ctx.selectorAtom()), ctx.l1SelOp(), [], OperatorMap.UnSelectorOperations,
+            (op, c) => new UnarySelectorExpr(op, c));
     }
 
-    public static State[] VisitStateMap(sallParser.StateMapContext? context)
+    public static AtomSelectorExpr VisitAtomSelector(sallParser.SelectorAtomContext selectorAtom)
+    {
+        return new AtomSelectorExpr(
+            VisitAtom<sallParser.SelectorAtomContext, SelectorExprOrSelector, SelectorChain, Selector>(selectorAtom,
+                c => VisitSelectorExpr(c.selectorExpr()),
+                c => VisitSelector(c.selector())));
+    }
+
+    private static Selector VisitSelector(sallParser.SelectorContext ctx)
+    {
+        return ctx switch
+        {
+            _ when ctx.uiSelector() != null => new UiSelector(ctx.uiSelector().IDENT().GetText()),
+            _ when ctx.markerSelector() != null => new MarkerSelector(ctx.markerSelector().IDENT().GetText()),
+            _ when ctx.stateMapSelector() != null => new StateMapSelector(VisitStateMap(ctx.stateMapSelector())),
+            _ when ctx.axesSelector() != null => ctx.axesSelector() switch
+            {
+                var c when c.childrenSelector() != null => new ChildrenSelector(
+                    VisitSliceOption(c.childrenSelector().sliceSelector())),
+                var c when c.leftSiblingsSelector() != null => new RightSiblingsSelector(
+                    VisitSliceOption(c.leftSiblingsSelector().sliceSelector())),
+                var c when c.rightSiblingsSelector() != null => new LeftSiblingsSelector(
+                    VisitSliceOption(c.rightSiblingsSelector().sliceSelector())),
+                var c when c.parentSelector() != null => new ParentSelector(),
+                _ => throw new ArgumentOutOfRangeException(nameof(ctx), ctx, null),
+            },
+            _ when ctx.sliceSelector() != null => new SliceSelector(VisitSliceOption(ctx.sliceSelector())!),
+            _ when ctx.reverseSelector() != null => new ReverseSelector(),
+            _ when ctx.uniqueSelector() != null => new UniqueSelector(),
+            _ => throw new ArgumentOutOfRangeException(nameof(ctx), ctx, null),
+        };
+    }
+
+    private static Range? VisitSliceOption(sallParser.SliceSelectorContext? sliceSelector)
+    {
+        if (sliceSelector == null)
+        {
+            return null;
+        }
+
+        var range = sliceSelector.range();
+        return range switch
+        {
+            _ when range.boundedRange() != null =>
+                new BoundedRange(VisitExpr(range.boundedRange().expr(0)), VisitExpr(range.boundedRange().expr(1))),
+            _ when range.rightUnboundedRange() != null =>
+                new RightUnboundedRange(VisitExpr(range.rightUnboundedRange().expr())),
+            _ when range.leftUnboundedRange() != null =>
+                new LeftUnboundedRange(VisitExpr(range.leftUnboundedRange().expr())),
+            _ when range.pointRange() != null =>
+                new PointRange(VisitExpr(range.pointRange().expr())),
+            _ => throw new ArgumentOutOfRangeException(),
+        };
+    }
+
+    public static State[] VisitStateMap(sallParser.StateMapSelectorContext? context)
     {
         return context?.state().Select(s =>
             new State(s.IDENT()?.GetText() ?? s.stateKvp().IDENT().GetText(),
                 s.stateKvp() != null ? VisitExpr(s.stateKvp().expr()) : null)).ToArray() ?? [];
     }
 
-    public static Class VisitClassDef(Selector selector, sallParser.ClassContentContext classContent)
+    public static AnonymousClass VisitAnonymousClassDef(sallParser.AnonymousClassDefContext context)
+    {
+        return VisitAnonymousClassDef(VisitSelectorExpr(context.selectorExpr()), context.classContent());
+    }
+
+    public static NamedClass VisitNamedClassDef(sallParser.NamedClassDefContext context)
+    {
+        var (parents, properties, subClasses) = VisitClassContent(context.classContent());
+        return new NamedClass(context.className().GetText(), parents, properties, subClasses);
+    }
+
+    public static AnonymousClass VisitAnonymousClassDef(SelectorChain selectorChain,
+        sallParser.ClassContentContext classContent)
     {
         var classBody = classContent.classBodyOrTerminator().classBody();
-        return new Class(
-            selector,
+        return new AnonymousClass(
+            selectorChain,
             Parents(classContent.parentsList()?.parent() ?? []),
             Properties(classBody?.classBodyItem().Select(cbi => cbi.property()).Where(p => p != null) ?? []),
-            SubClasses(classBody?.classBodyItem().Select(cbi => cbi.subClassDef()).Where(scd => scd != null) ?? [])
+            SubClasses(
+                classBody?.classBodyItem().Select(cbi => cbi.anonymousClassDef()).Where(scd => scd != null) ?? [])
         );
 
         Parent[] Parents(sallParser.ParentContext[] ctx)
@@ -170,22 +232,37 @@ public class SallVisitor
             return ctx.Select(p => new Property(p.IDENT().GetText(), VisitExpr(p.expr()))).ToArray();
         }
 
-        Class[] SubClasses(IEnumerable<sallParser.SubClassDefContext> ctx)
+        AnonymousClass[] SubClasses(IEnumerable<sallParser.AnonymousClassDefContext> ctx)
         {
-            return ctx.Select(sc => VisitClassDef(SubSelector(sc.subSelector()), sc.classContent())).ToArray();
+            return ctx.Select(VisitAnonymousClassDef).ToArray();
+        }
+    }
+
+    public static (Parent[], Property[], AnonymousClass[]) VisitClassContent(
+        sallParser.ClassContentContext classContent)
+    {
+        var classBody = classContent.classBodyOrTerminator().classBody();
+        return (
+            Parents(classContent.parentsList()?.parent() ?? []),
+            Properties(classBody?.classBodyItem().Select(cbi => cbi.property()).Where(p => p != null) ?? []),
+            SubClasses(
+                classBody?.classBodyItem().Select(cbi => cbi.anonymousClassDef()).Where(scd => scd != null) ?? []
+            )
+        );
+
+        Parent[] Parents(sallParser.ParentContext[] ctx)
+        {
+            return ctx.Select(p => new Parent(p.IDENT().GetText(), VisitArgs(p.args()))).ToArray();
         }
 
-        Selector SubSelector(sallParser.SubSelectorContext subSelector)
+        Property[] Properties(IEnumerable<sallParser.PropertyContext> ctx)
         {
-            var stateMap = VisitStateMap(subSelector.stateMap());
-            return subSelector switch
-            {
-                _ when subSelector.uiSelector() != null => VisitUiSelector(subSelector.uiSelector(), stateMap),
-                _ when subSelector.childrenSelector() != null => new RelationSelector(Relation.Children, stateMap),
-                _ when subSelector.parentSelector() != null => new RelationSelector(Relation.Parent, stateMap),
-                _ when subSelector.siblingsSelector() != null => new RelationSelector(Relation.Siblings, stateMap),
-                _ => throw new ArgumentOutOfRangeException(nameof(subSelector), subSelector, null),
-            };
+            return ctx.Select(p => new Property(p.IDENT().GetText(), VisitExpr(p.expr()))).ToArray();
+        }
+
+        AnonymousClass[] SubClasses(IEnumerable<sallParser.AnonymousClassDefContext> ctx)
+        {
+            return ctx.Select(VisitAnonymousClassDef).ToArray();
         }
     }
 
@@ -194,24 +271,49 @@ public class SallVisitor
         return context?.paramList()?.param().Select(p => new Param(p.IDENT().GetText(), VisitExpr(p.expr())))
             .ToArray() ?? [];
     }
-}
 
-public static class OperatorMap
-{
-    public static readonly Dictionary<string, BinOperation> BinOperations = new()
+    #region Helpers
+
+    private static T VisitBinRecursive<T>(ParserRuleContext ctx, List<Func<ParserRuleContext, ParserRuleContext>> chain,
+        Func<ParserRuleContext, T> lowest,
+        Func<string, T, T, T> createNew, int level = 0)
     {
-        { "||", BinOperation.Or },
-        { "&&", BinOperation.And },
-        { "<", BinOperation.Lt },
-        { "<=", BinOperation.Le },
-        { ">", BinOperation.Gt },
-        { ">=", BinOperation.Ge },
-        { "==", BinOperation.Eq },
-        { "!=", BinOperation.Ne },
-        { "+", BinOperation.Add },
-        { "-", BinOperation.Subtract },
-        { "*", BinOperation.Multiply },
-        { "/", BinOperation.Divide },
-        { "%", BinOperation.Remainder },
-    };
+        if (level == chain.Count) return lowest(ctx);
+
+        var getNext = chain[level];
+        var left = VisitBinRecursive(getNext(ctx), chain, lowest, createNew, level + 1);
+
+        for (var i = 1; i < ctx.ChildCount; i += 2)
+        {
+            var opNode = ctx.GetChild(i);
+            var rightNode = ctx.GetChild(i + 1);
+            var right = VisitBinRecursive((ParserRuleContext)rightNode, chain, lowest, createNew, level + 1);
+            left = createNew(opNode.GetText(), left, right);
+        }
+
+        return left;
+    }
+
+    private static TOut VisitUnRecursive<TOut, TOp, TOpContext, TAtom>(TAtom atom, TOpContext[] ops,
+        Func<TOpContext, bool>[] filters, IDictionary<string, TOp> operationsMap, Func<TOp, TOut, TOut> createNew)
+        where TOpContext : IParseTree
+        where TAtom : TOut
+    {
+        var enumerable = ops.Reverse();
+        enumerable = filters.Aggregate(enumerable, (current, filter) => current.Where(filter));
+        return enumerable.Aggregate<TOpContext, TOut>(atom, (current, opContext) =>
+            createNew(operationsMap[opContext.GetText()], current));
+    }
+
+    private static TOut VisitAtom<T, TOut, TExpr, TValue>(T ctx, Func<T, TExpr> visitExpr, Func<T, TValue> visitValue)
+        where T : IParseTree
+        where TExpr : TOut
+        where TValue : TOut
+    {
+        return ctx.ChildCount == 3
+            ? visitExpr(ctx)
+            : visitValue(ctx);
+    }
+
+    #endregion
 }

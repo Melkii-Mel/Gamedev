@@ -15,10 +15,12 @@ public class Tests
 
     [Theory]
     [InlineData("syntax.sall", "syntax.sall.txt")]
+    [InlineData("complex_selectors.sall", "complex_selectors.sall.txt")]
     public void SnapshotTest(string inputFileName, string snapshotFileName)
     {
         var expected = DataAccess.ReadTestDataSnapshots(snapshotFileName);
         var actual = ToAstString(inputFileName);
+        Output.WriteLine(actual);
         Assert.Equal(expected, actual);
     }
 

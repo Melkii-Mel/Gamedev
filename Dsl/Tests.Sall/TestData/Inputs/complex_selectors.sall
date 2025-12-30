@@ -1,0 +1,6 @@
+class { }
+>>> { }
+button test > test another { }
+(cta || [disabled]) > { }
+@button ((cta || [[0]]) && [disabled, duration > 100]) > { }
+super complex selector > (-[[..2]] || +[[..2]]) > [[nth]] ~ # !((cat || dog) && bark) test;

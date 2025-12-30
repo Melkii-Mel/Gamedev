@@ -1,6 +1,6 @@
 ﻿namespace Sall;
 
-public enum BinOperation
+public enum BinaryOperation
 {
     Or,
     And,
@@ -17,21 +17,42 @@ public enum BinOperation
     Remainder,
 }
 
-public enum UnOperation
+public enum UnaryOperation
 {
     Negative,
     Not,
 }
 
-public record Stylesheet(Variable[] Variables, Class[] Classes);
+public enum BinarySelectorOperation
+{
+    Or,
+    And,
+}
+
+public enum UnarySelectorOperation
+{
+    Not,
+}
+
+public enum SizeUnit
+{
+    Px,
+    Percent,
+    Em,
+    Rem,
+    Vh,
+    Vw,
+}
+
+public record Stylesheet(Variable[] Variables, AnonymousClass[] AnonymousClasses, NamedClass[] NamedClasses);
 
 public abstract record ExprOrValue;
 
 public abstract record Expr : ExprOrValue;
 
-public record BinaryExpr(BinOperation Operation, Expr Left, Expr Right) : Expr;
+public record BinaryExpr(BinaryOperation Operation, Expr Left, Expr Right) : Expr;
 
-public record UnaryExpr(UnOperation Operation, UnaryOrAtomExpr Expr) : UnaryOrAtomExpr;
+public record UnaryExpr(UnaryOperation Operation, UnaryOrAtomExpr Expr) : UnaryOrAtomExpr;
 
 public record AtomExpr(ExprOrValue ExprOrValue) : UnaryOrAtomExpr;
 
@@ -51,42 +72,77 @@ public record Size(double Value, SizeUnit Unit) : Value;
 
 public record Color(Primitives.Color Value) : Value;
 
-public record Call(string Ident, Args Args) : Expr;
+public record Call(string Ident, Args Args) : Value;
 
-public record VariableRef(string Ident) : Expr;
+public record VariableRef(string Ident) : Value;
 
-public record Class(Selector Selector, Parent[] Parents, Property[] Properties, Class[] SubClasses);
+public abstract record Class(Parent[] Parents, Property[] Properties, AnonymousClass[] SubClasses);
+
+public record AnonymousClass(
+    SelectorChain SelectorChain,
+    Parent[] Parents,
+    Property[] Properties,
+    AnonymousClass[] SubClasses)
+    : Class(Parents, Properties, SubClasses);
+
+public record NamedClass(string Name, Parent[] Parents, Property[] Properties, AnonymousClass[] SubClasses)
+    : Class(Parents, Properties, SubClasses);
 
 public record Parent(string Ident, Args Args);
 
 public record Property(string Ident, Expr Expr);
 
-public abstract record Selector(State[] StateMap);
+public record SelectorChain(SelectorExpr[] Selectors) : SelectorExpr;
 
-public record UiSelector(string Ident, State[] StateMap) : Selector(StateMap);
+public abstract record SelectorExprOrSelector;
 
-public record CustomSelector(string Ident, Param[] Params, State[] StateMap) : Selector(StateMap);
+public abstract record SelectorExpr : SelectorExprOrSelector;
 
-public record RelationSelector(Relation Relation, State[] StateMap) : Selector(StateMap);
+public abstract record UnaryOrAtomSelectorExpr : SelectorExpr;
 
-public enum Relation
-{
-    Children,
-    Parent,
-    Siblings,
-}
+public record BinarySelectorExpr(BinarySelectorOperation Operation, SelectorExpr Left, SelectorExpr Right)
+    : SelectorExpr;
+
+public record UnarySelectorExpr(UnarySelectorOperation Operation, UnaryOrAtomSelectorExpr UnaryOrAtomSelectorExpr)
+    : UnaryOrAtomSelectorExpr;
+
+public record AtomSelectorExpr(SelectorExprOrSelector SelectorExprOrSelector) : UnaryOrAtomSelectorExpr;
+
+public abstract record Selector : SelectorExprOrSelector;
+
+public record UiSelector(string Ident) : Selector;
+
+public record MarkerSelector(string Ident) : Selector;
+
+public record StateMapSelector(State[] StateMap) : Selector;
+
+public abstract record AxesSelector : Selector;
+
+public record ReverseSelector() : Selector;
+
+public record UniqueSelector() : Selector;
+
+public record ChildrenSelector(Range? Range) : AxesSelector;
+
+public record ParentSelector : AxesSelector;
+
+public record LeftSiblingsSelector(Range? Range) : AxesSelector;
+
+public record RightSiblingsSelector(Range? Range) : AxesSelector;
+
+public record SliceSelector(Range Range) : Selector;
+
+public abstract record Range;
+
+public record PointRange(Expr Expr) : Range;
+
+public record RightUnboundedRange(Expr Expr) : Range;
+
+public record LeftUnboundedRange(Expr Expr) : Range;
+
+public record BoundedRange(Expr Left, Expr Right) : Range;
 
 public record State(string Ident, Expr? Expr);
-
-public enum SizeUnit
-{
-    Px,
-    Percent,
-    Em,
-    Rem,
-    Vh,
-    Vw,
-}
 
 public record Variable(string Name, Param[] Params, Expr Expr);
 
