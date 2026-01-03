@@ -3,6 +3,9 @@ using Gamedev.Debugging;
 using Gamedev.Entities;
 using Gamedev.Localization;
 using Gamedev.Resources;
+using Primitives;
+using Primitives.Shapes;
+using Silk.NET.Maths;
 
 namespace Gamedev;
 
@@ -78,7 +81,7 @@ public interface IEntities
     {
         EntityComponent<INode2D> Node();
         EntityComponent<ISprite2D> Sprite(ITexture? tilesTexture = null);
-        EntityComponent<ITrigger2D> Trigger(ICollider2D? collider2D = null);
+        EntityComponent<ITrigger2D> Trigger(Collider2D? collider2D = null);
     }
 
     public interface I3D
