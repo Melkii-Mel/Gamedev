@@ -90,6 +90,15 @@ public interface IEntities
     }
 }
 
+public static class I2DExtensions
+{
+    public static EntityComponent<ITrigger2D> Trigger(this IEntities.I2D i2d, IShape2D shape2D,
+        Vector2D<float>? pivot = null)
+    {
+        return i2d.Trigger(new Collider2D(shape2D, pivot ?? Defaults.DefaultPivot));
+    }
+}
+
 public class Engine
 {
     public Engine(IEngine engine)
