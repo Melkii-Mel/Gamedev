@@ -17,7 +17,41 @@ public interface IEntity
     IEnumerable<IEntity> GetChildren();
 }
 
-public record struct EntityComponent<T>(IEntity Entity, T Component);
+public static class EntityExtensions
+{
+    public static void AddChild<T>(this IEntity entity, EntityComponent<T> entityComponent)
+    {
+        entity.AddChild(entityComponent.Entity);
+    }
+
+    public static void RemoveChild<T>(this IEntity entity, EntityComponent<T> entityComponent)
+    {
+        entity.RemoveChild(entityComponent.Entity);
+    }
+}
+
+public readonly record struct EntityComponent<T>(IEntity Entity, T Component)
+{
+    public void AddChild(IEntity entity)
+    {
+        Entity.AddChild(entity);
+    }
+
+    public void AddChild<TOther>(EntityComponent<TOther> entityComponent)
+    {
+        Entity.AddChild(entityComponent);
+    }
+
+    public void RemoveChild(IEntity entity)
+    {
+        Entity.RemoveChild(entity);
+    }
+
+    public void RemoveChild<TOther>(EntityComponent<TOther> entityComponent)
+    {
+        Entity.RemoveChild(entityComponent);
+    }
+}
 
 public interface IButton
 {
