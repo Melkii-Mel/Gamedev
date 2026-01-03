@@ -36,9 +36,9 @@ public static class EngineInstance
 /// </summary>
 public interface IEngine
 {
-    public IEntities Entities { get; }
-    public EntityComponent<INode> Root { get; }
-    public IDebugOutput DebugOutput { get; }
+    IEntities Entities { get; }
+    EntityComponent<INode> Root { get; }
+    IDebugOutput DebugOutput { get; }
     Resources.Resources Resources { get; }
 
     /// <summary>
@@ -62,26 +62,26 @@ public interface IEngine
 /// </summary>
 public interface IEntities
 {
-    public IUi Ui { get; }
-    public I2D E2D { get; }
-    public I3D E3D { get; }
+    IUi Ui { get; }
+    I2D E2D { get; }
+    I3D E3D { get; }
 
-    public EntityComponent<INode> Node();
+    EntityComponent<INode> Node();
 
     public interface IUi
     {
-        public EntityComponent<IControl> Control();
-        public EntityComponent<IButton> Button();
+        EntityComponent<IControl> Control();
+        EntityComponent<IButton> Button();
     }
 
     public interface I2D
     {
-        public EntityComponent<INode2D> Node();
+        EntityComponent<INode2D> Node();
     }
 
     public interface I3D
     {
-        public EntityComponent<INode3D> Node();
+        EntityComponent<INode3D> Node();
     }
 }
 
