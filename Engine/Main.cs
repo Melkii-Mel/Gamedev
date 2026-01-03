@@ -96,7 +96,7 @@ public class Engine
     public RootGroup Scene { get; }
     public IEntities Entities => E.Entities;
 
-    public IDebugOutput DebugOutput => E.DebugOutput;
+    public DebugOutput DebugOutput => new(E.DebugOutput);
     public EssentialSettings EssentialSettings { get; } = new();
     public event Action<double>? Update;
 

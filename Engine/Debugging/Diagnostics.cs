@@ -40,3 +40,21 @@ public interface IDebugOutput
 {
     void Out(DebugMessage message);
 }
+
+public class DebugOutput(IDebugOutput debugOutput)
+{
+    public void Info(string text)
+    {
+        debugOutput.Out(new DebugMessage(MessageType.Info, text));
+    }
+
+    public void Warning(string text)
+    {
+        debugOutput.Out(new DebugMessage(MessageType.Warning, text));
+    }
+
+    public void Error(string text)
+    {
+        debugOutput.Out(new DebugMessage(MessageType.Error, text));
+    }
+}
