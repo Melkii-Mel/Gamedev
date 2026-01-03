@@ -6,4 +6,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <PackageReference Include="Microsoft.Bcl.Numerics" Version="10.0.1" />
+      <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.1" />
+      <PackageReference Include="Silk.NET.Maths" Version="2.22.0" />
+    </ItemGroup>
+
 </Project>
