@@ -2,6 +2,7 @@
 using Gamedev.Debugging;
 using Gamedev.Entities;
 using Gamedev.Localization;
+using Gamedev.Resources;
 
 namespace Gamedev;
 
@@ -38,6 +39,7 @@ public interface IEngine
     public IEntities Entities { get; }
     public EntityComponent<INode> Root { get; }
     public IDebugOutput DebugOutput { get; }
+    Resources.Resources Resources { get; }
 
     /// <summary>
     ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
@@ -95,6 +97,7 @@ public class Engine
     public IEngine E { get; }
     public RootGroup Scene { get; }
     public IEntities Entities => E.Entities;
+    public Resources.Resources Resources => E.Resources;
 
     public DebugOutput DebugOutput => new(E.DebugOutput);
     public EssentialSettings EssentialSettings { get; } = new();
