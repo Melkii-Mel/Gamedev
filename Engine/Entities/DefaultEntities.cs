@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Gamedev.Localization;
+using Primitives.Shapes;
 using Silk.NET.Maths;
 
 namespace Gamedev.Entities;
@@ -69,6 +70,33 @@ public interface IControl
 }
 
 public interface INode2D
+{
+    int ZIndex { get; set; }
+    ITransform2D Transform { get; }
+}
+
+public interface ITransform2D
+{
+    Vector2D<float> Position { get; set; }
+    float Rotation { get; set; }
+    Vector2D<float> Scale { get; set; }
+}
+
+public interface ISprite2D
+{
+    INode2D Node { get; }
+
+    /// <summary>
+    /// The pivot of the sprite relative to its size:
+    /// (0,0) = top-left, (1,1) = bottom-right.
+    /// Defaults to (0.5, 0.5) to center the sprite.
+    /// 
+    /// Engine implementations must respect this default when providing the sprite.
+    /// </summary>
+    Vector2D<float> Pivot { get; set; }
+}
+
+public interface ITrigger2D
 {
 }
 
