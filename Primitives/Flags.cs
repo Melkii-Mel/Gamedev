@@ -6,7 +6,7 @@ public class Flags
 {
     public event EventHandler<FlagChangedEventArgs>? FlagChanged;
 
-    private ushort _raw;
+    private ushort _raw = 1;
 
     public void Set(byte index, bool state = true)
     {
