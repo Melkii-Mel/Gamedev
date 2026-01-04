@@ -4,7 +4,7 @@ namespace Primitives;
 
 public class Flags
 {
-    public event EventHandler<FlagChangedEventArgs>? FlagChanged;
+    public event Action<FlagChangedEventArgs>? FlagChanged;
 
     private ushort _raw = 1;
 
@@ -22,7 +22,7 @@ public class Flags
             _raw &= (ushort)~(1 << index);
         }
 
-        FlagChanged?.Invoke(this, new FlagChangedEventArgs(index, state));
+        FlagChanged?.Invoke(new FlagChangedEventArgs(index, state));
     }
 
     public void Clear(byte index)
@@ -48,14 +48,5 @@ public class Flags
     }
 }
 
-public class FlagChangedEventArgs : EventArgs
-{
-    public byte Index { get; }
-    public bool NewValue { get; }
+public record FlagChangedEventArgs(byte Index, bool NewValue);
 
-    public FlagChangedEventArgs(byte index, bool newValue)
-    {
-        Index = index;
-        NewValue = newValue;
-    }
-}
