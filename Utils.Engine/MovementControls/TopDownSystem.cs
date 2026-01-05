@@ -5,12 +5,12 @@ using static Gamedev.EngineInstance;
 
 namespace Utils.Engine.MovementControls;
 
-public class TopDown
+public class TopDownSystem
 {
-    public State State { get; set; }
+    public TopDownState State { get; set; }
     public event Action<Vector2D<float>>? PositionUpdated;
 
-    public TopDown(Config config, State state, Action<float> update, Action<Direction[]>? discreteAction, Action<Vector2D<float>>? analogAction)
+    public TopDownSystem(TopDownConfig config, TopDownState state, Action<float> update, Action<TopDownDirection[]>? discreteAction, Action<Vector2D<float>>? analogAction)
     {
         State = state;
         if (discreteAction == null && analogAction == null)
@@ -27,24 +27,24 @@ public class TopDown
         State.CurrentDirection = direction;
     }
 
-    private void UpdateDirection(Direction[] directions)
+    private void UpdateDirection(TopDownDirection[] directions)
     {
         var direction = Vector2D<float>.Zero;
         foreach (var d in directions)
         {
             direction += d switch
             {
-                Direction.Up => -Vector2D<float>.UnitY,
-                Direction.Down => Vector2D<float>.UnitY,
-                Direction.Left => Vector2D<float>.UnitX,
-                Direction.Right => -Vector2D<float>.UnitX,
+                TopDownDirection.Up => -Vector2D<float>.UnitY,
+                TopDownDirection.Down => Vector2D<float>.UnitY,
+                TopDownDirection.Left => Vector2D<float>.UnitX,
+                TopDownDirection.Right => -Vector2D<float>.UnitX,
                 _ => throw new NotSupportedException(),
             };
         }
         State.CurrentDirection = Vector2D.Normalize(direction);
     }
 
-    private void Update(float delta, Config config)
+    private void Update(float delta, TopDownConfig config)
     {
         if (State.CurrentDirection.LengthSquared < Defaults.Tolerance) return;
         var directionNormalized = Vector2D.Normalize(State.CurrentDirection);
@@ -66,25 +66,4 @@ public class TopDown
             }
         }
     }
-}
-
-public class State
-{
-    public Vector2D<float> Position { get; set; }
-    public Vector2D<float> Velocity { get; set; }
-    public Vector2D<float> CurrentDirection { get; set; }
-}
-
-public record Config(
-    float MaxVelocity,
-    float Acceleration,
-    float Deceleration
-);
-
-public enum Direction
-{
-    Up,
-    Down,
-    Left,
-    Right
 }
