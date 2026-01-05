@@ -42,7 +42,7 @@ public interface IEngine
     IEntities Entities { get; }
     EntityComponent<INode> Root { get; }
     IDebugOutput DebugOutput { get; }
-    Resources.Resources Resources { get; }
+    IResources Resources { get; }
 
     /// <summary>
     ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
@@ -106,12 +106,13 @@ public class Engine
         E = engine;
         Scene = InitGlobalRoot();
         E.Update += Update;
+        Resources = new(E.Resources);
     }
 
     public IEngine E { get; }
     public RootGroup Scene { get; }
     public IEntities Entities => E.Entities;
-    public Resources.Resources Resources => E.Resources;
+    public Resources.Resources Resources { get; }
 
     public DebugOutput DebugOutput => new(E.DebugOutput);
     public EssentialSettings EssentialSettings { get; } = new();
