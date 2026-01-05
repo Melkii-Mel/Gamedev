@@ -29,9 +29,9 @@ public interface ITexture
 
 public class Resources
 {
-    public Resources(ITextureLoader textureLoader)
+    public Resources(IResources resources)
     {
-        TextureLoader = new TextureLoader(textureLoader);
+        TextureLoader = new TextureLoader(resources.TextureLoader);
     }
 
     public TextureLoader TextureLoader { get; }
