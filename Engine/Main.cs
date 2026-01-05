@@ -80,7 +80,7 @@ public interface IEntities
     public interface I2D
     {
         EntityComponent<INode2D> Node();
-        EntityComponent<ISprite2D> Sprite(ITexture? tilesTexture = null);
+        EntityComponent<ISprite2D> Sprite(ITexture? texture = null);
         EntityComponent<ITrigger2D> Trigger(Collider2D? collider2D = null);
     }
 
