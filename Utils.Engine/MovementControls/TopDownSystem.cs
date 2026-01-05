@@ -10,16 +10,16 @@ public class TopDownSystem
     public TopDownState State { get; set; }
     public event Action<Vector2D<float>>? PositionUpdated;
 
-    public TopDownSystem(TopDownConfig config, TopDownState state, Action<float> update, Action<TopDownDirection[]>? discreteAction, Action<Vector2D<float>>? analogAction)
+    public TopDownSystem(TopDownConfig config, TopDownState state, Action<Action<float>> updateBinder, Action<Action<TopDownDirection[]>>? discreteActionBinder, Action<Action<Vector2D<float>>>? analogActionBinder)
     {
         State = state;
-        if (discreteAction == null && analogAction == null)
+        if (discreteActionBinder == null && analogActionBinder == null)
         {
             E.DebugOutput.Warning("Top-down movement controls initialized with neither discrete or analog input actions.");
         }
-        update += delta => Update(delta, config);
-        discreteAction += UpdateDirection;
-        analogAction += UpdateDirection;
+        updateBinder(delta => Update(delta, config));
+        discreteActionBinder?.Invoke(UpdateDirection);
+        analogActionBinder?.Invoke(UpdateDirection);
     }
 
     private void UpdateDirection(Vector2D<float> direction)
