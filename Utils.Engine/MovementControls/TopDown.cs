@@ -8,6 +8,7 @@ namespace Utils.Engine.MovementControls;
 public class TopDown
 {
     public State State { get; set; }
+    public event Action<Vector2D<float>>? PositionUpdated;
 
     public TopDown(Config config, State state, Action<float> update, Action<Direction[]>? discreteAction, Action<Vector2D<float>>? analogAction)
     {
@@ -51,6 +52,10 @@ public class TopDown
         RaiseVelocity();
         State.Position += State.Velocity * delta;
         RaiseVelocity();
+
+        PositionUpdated?.Invoke(State.Position);
+
+        return;
 
         void RaiseVelocity()
         {
