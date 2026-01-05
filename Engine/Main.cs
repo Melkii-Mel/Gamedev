@@ -106,6 +106,7 @@ public class Engine
         E = engine;
         Scene = InitGlobalRoot();
         E.Update += Update;
+        DebugOutput = new(E.DebugOutput);
         Resources = new(E.Resources);
     }
 
@@ -114,7 +115,7 @@ public class Engine
     public IEntities Entities => E.Entities;
     public Resources.Resources Resources { get; }
 
-    public DebugOutput DebugOutput => new(E.DebugOutput);
+    public DebugOutput DebugOutput { get; }
     public EssentialSettings EssentialSettings { get; } = new();
     public event Action<double>? Update;
 
