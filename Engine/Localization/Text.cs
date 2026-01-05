@@ -113,4 +113,7 @@ public class Text
         OnUpdate += setter;
         setter(GetValue());
     }
+
+    public static implicit operator Text(string s) => new(s);
+    public static implicit operator string(Text t) => t.GetValue();
 }
