@@ -10,7 +10,13 @@ public class TopDownSystem
     public TopDownState State { get; set; }
     public event Action<Vector2D<float>>? PositionUpdated;
 
-    public TopDownSystem(TopDownConfig config, TopDownState state, Action<Action<float>> updateBinder, Action<Action<TopDownDirection[]>>? discreteActionBinder, Action<Action<Vector2D<float>>>? analogActionBinder)
+    public TopDownSystem(
+        TopDownConfig config, 
+        TopDownState state, 
+        Action<Action<float>> updateBinder, 
+        Action<Action<TopDownDirection[]>>? discreteActionBinder, 
+        Action<Action<Vector2D<float>>>? analogActionBinder = null
+    )
     {
         State = state;
         if (discreteActionBinder == null && analogActionBinder == null)
