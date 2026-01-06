@@ -7,9 +7,9 @@ public class WeakAction<TArg>
 {
     private Tree<WeakReference<Action<TArg>>> _actions = [];
 
-    public WeakAction(Action<TArg> value)
+    public WeakAction(Action<TArg>? value = null)
     {
-        _actions.Value = new WeakReference<Action<TArg>>(value);
+        _actions.Value = value == null ? null : new WeakReference<Action<TArg>>(value);
     }
 
     public static WeakAction<TArg> operator +(WeakAction<TArg> a, WeakAction<TArg> b)
