@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Primitives;
 using Silk.NET.Maths;
 using static Gamedev.EngineInstance;
@@ -14,7 +15,7 @@ public class TopDownSystem
         TopDownConfig config, 
         TopDownState state, 
         Action<Action<float>> updateBinder, 
-        Action<Action<TopDownDirection[]>>? discreteActionBinder, 
+        Action<Action<IEnumerable<TopDownDirection>>>? discreteActionBinder, 
         Action<Action<Vector2D<float>>>? analogActionBinder = null
     )
     {
@@ -33,7 +34,7 @@ public class TopDownSystem
         State.CurrentDirection = direction;
     }
 
-    private void UpdateDirection(TopDownDirection[] directions)
+    private void UpdateDirection(IEnumerable<TopDownDirection> directions)
     {
         var direction = Vector2D<float>.Zero;
         foreach (var d in directions)
