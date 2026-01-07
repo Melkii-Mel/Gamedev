@@ -71,6 +71,31 @@ public interface IPanel
     float BorderRadius { get; set; }
 }
 
+public interface ITextField
+{
+    IControl Control { get; }
+    Text? Text { get; set; }
+    float FontSize { get; set; }
+    string FontFamily { get; set; }
+    Color Color { get; set; }
+    HAlignment HAlignment { get; set; }
+    VAlignment VAlignment { get; set; }
+}
+
+public enum HAlignment
+{
+    Left,
+    Center,
+    Right,
+}
+
+public enum VAlignment
+{
+    Top,
+    Center,
+    Bottom,
+}
+
 public interface IControl
 {
     Rectangle<float> Bounds { get; set; }
