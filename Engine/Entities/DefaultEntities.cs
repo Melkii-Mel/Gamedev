@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Gamedev.Localization;
 using Primitives.Shapes;
+using Gamedev.Resources;
 using Silk.NET.Maths;
 
 namespace Gamedev.Entities;
@@ -97,6 +98,7 @@ public interface ISprite2D
     /// Engine implementations must respect this default when providing the sprite.
     /// </summary>
     Vector2D<float> Pivot { get; set; }
+    ITexture Texture { get; set; }
 }
 
 public interface ITrigger2D
