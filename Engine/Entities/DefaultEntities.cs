@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Gamedev.Localization;
-using Primitives.Shapes;
 using Gamedev.Resources;
+using Primitives;
 using Silk.NET.Maths;
 
 namespace Gamedev.Entities;
@@ -101,8 +101,20 @@ public interface ISprite2D
     ITexture Texture { get; set; }
 }
 
-public interface ITrigger2D
+public interface ITrigger2D : ITrigger<INode2D, ITrigger2D>
 {
+    Collider2D Collider { get; set; }
+}
+
+public interface ITrigger<TNode, TParent>
+{
+    TNode Node { get; set; }
+    Flags Mask { get; set; }
+    Flags Layer { get; set; }
+
+    event Action<TParent>? OnEnter;
+    event Action<TParent, float>? OnStay;
+    event Action<TParent>? OnExit;
 }
 
 public interface INode3D
