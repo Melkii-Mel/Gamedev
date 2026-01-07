@@ -1,6 +1,8 @@
 ﻿using System;
 using Gamedev.Debugging;
 using Gamedev.Entities;
+using Gamedev.InputSystem;
+using Gamedev.InputSystem.Api;
 using Gamedev.Localization;
 using Gamedev.Resources;
 using Primitives;
@@ -43,6 +45,7 @@ public interface IEngine
     EntityComponent<INode> Root { get; }
     IDebugOutput DebugOutput { get; }
     IResources Resources { get; }
+    IInput Input { get; }
 
     /// <summary>
     ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
@@ -108,6 +111,7 @@ public class Engine
         E.Update += Update;
         DebugOutput = new(E.DebugOutput);
         Resources = new(E.Resources);
+        Input = new(E.Input);
     }
 
     public IEngine E { get; }
@@ -117,6 +121,8 @@ public class Engine
 
     public DebugOutput DebugOutput { get; }
     public EssentialSettings EssentialSettings { get; } = new();
+    public Input Input { get; }
+
     public event Action<double>? Update;
 
     private RootGroup InitGlobalRoot()
