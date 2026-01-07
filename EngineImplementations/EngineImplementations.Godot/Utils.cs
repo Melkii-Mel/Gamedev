@@ -2,7 +2,7 @@
 using Godot;
 using Silk.NET.Maths;
 
-namespace EngineImplementations.Godot;
+namespace EngineImplementations.GodotImplementation;
 
 public static class Utils
 {

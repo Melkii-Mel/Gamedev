@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using EngineImplementations.Godot.Components;
-using EngineImplementations.Godot.EntitiesImplementations;
+using EngineImplementations.GodotImplementation.Components;
+using EngineImplementations.GodotImplementation.EntitiesImplementations;
 using Gamedev;
 using Gamedev.Debugging;
 using Gamedev.Entities;
 using Godot;
 
-namespace EngineImplementations.Godot;
+namespace EngineImplementations.GodotImplementation;
 
 public class Implementation : IEngine
 {

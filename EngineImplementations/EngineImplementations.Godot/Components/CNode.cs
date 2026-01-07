@@ -1,5 +1,5 @@
 ﻿using Gamedev.Entities;
 
-namespace EngineImplementations.Godot.Components;
+namespace EngineImplementations.GodotImplementation.Components;
 
 public class CNode : INode;

@@ -1,9 +1,9 @@
-using EngineImplementations.Godot.Components;
+using EngineImplementations.GodotImplementation.Components;
 using Gamedev;
 using Gamedev.Entities;
 using Godot;
 
-namespace EngineImplementations.Godot.EntitiesImplementations;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations;
 
 public class E3D : IEntities.I3D
 {

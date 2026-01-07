@@ -2,7 +2,7 @@
 using Godot;
 using Silk.NET.Maths;
 
-namespace EngineImplementations.Godot.Components;
+namespace EngineImplementations.GodotImplementation.Components;
 
 public readonly struct CControl(Control control) : IControl
 {

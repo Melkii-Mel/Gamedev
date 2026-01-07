@@ -3,7 +3,7 @@ using Gamedev.Entities;
 using Gamedev.Localization;
 using Godot;
 
-namespace EngineImplementations.Godot.Components;
+namespace EngineImplementations.GodotImplementation.Components;
 
 public class CButton(Button button) : IButton
 {
