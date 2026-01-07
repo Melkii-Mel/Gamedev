@@ -68,6 +68,8 @@ public interface IControl
     Vector2D<float> Pivot { get; set; }
     Rectangle<float> Margins { get; set; }
     bool Visible { get; set; }
+
+    // TODO: Add a property that maps a set of common events like mouse clicks, movement etc.
 }
 
 public interface INode2D
