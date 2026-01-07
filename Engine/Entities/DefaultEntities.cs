@@ -58,7 +58,7 @@ public interface IButton
 {
     IControl Control { get; }
     Text? Text { get; set; }
-    event Action OnClick;
+    event Action? OnClick;
 }
 
 public interface IControl
