@@ -67,6 +67,7 @@ public interface IControl
     Rectangle<float> Anchors { get; set; }
     Vector2D<float> Pivot { get; set; }
     Rectangle<float> Margins { get; set; }
+    bool Visible { get; set; }
 }
 
 public interface INode2D
