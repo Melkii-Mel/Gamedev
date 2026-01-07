@@ -62,6 +62,15 @@ public interface IButton
     event Action? OnClick;
 }
 
+public interface IPanel
+{
+    IControl Control { get; }
+    Color BackgroundColor { get; }
+    Color BorderColor { get; set; }
+    float BorderThickness { get; set; }
+    float BorderRadius { get; set; }
+}
+
 public interface IControl
 {
     Rectangle<float> Bounds { get; set; }
