@@ -78,6 +78,9 @@ public interface IEntities
     {
         EntityComponent<IControl> Control();
         EntityComponent<IButton> Button();
+        EntityComponent<IPanel> Panel();
+        EntityComponent<ITextField> TextField();
+        EntityComponent<IImage> Image(ITexture? texture = null);
     }
 
     public interface I2D
