@@ -96,6 +96,12 @@ public enum VAlignment
     Bottom,
 }
 
+public interface IImage
+{
+    IControl Control { get; }
+    ITexture? Texture { get; set; }
+}
+
 public interface IControl
 {
     Rectangle<float> Bounds { get; set; }
