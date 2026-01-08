@@ -8,6 +8,8 @@ public class Flags(uint raw = 1)
 
     private uint _raw = raw;
 
+    public uint Raw => _raw;
+
     public void Set(byte index, bool state = true)
     {
         CheckIndex(index);
