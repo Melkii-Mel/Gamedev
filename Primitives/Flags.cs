@@ -2,11 +2,11 @@
 
 namespace Primitives;
 
-public class Flags(ushort raw = 1)
+public class Flags(uint raw = 1)
 {
     public event Action<FlagChangedEventArgs>? FlagChanged;
 
-    private ushort _raw = raw;
+    private uint _raw = raw;
 
     public void Set(byte index, bool state = true)
     {
@@ -15,11 +15,11 @@ public class Flags(ushort raw = 1)
 
         if (state)
         {
-            _raw |= (ushort)(1 << index);
+            _raw |= (uint)(1 << index);
         }
         else
         {
-            _raw &= (ushort)~(1 << index);
+            _raw &= (uint)~(1 << index);
         }
 
         FlagChanged?.Invoke(new FlagChangedEventArgs(index, state));
@@ -38,13 +38,13 @@ public class Flags(ushort raw = 1)
 
     public override string ToString()
     {
-        return Convert.ToString(_raw & 0xFFFF, 2).PadLeft(16, '0');
+        return Convert.ToString(_raw & 0xFFFFFFFF, 2).PadLeft(32, '0');
     }
 
     private static void CheckIndex(byte index)
     {
-        if (index > 15)
-            throw new ArgumentOutOfRangeException(nameof(index), "Index must be 0-15");
+        if (index > 31)
+            throw new ArgumentOutOfRangeException(nameof(index), "Index must be 0-31");
     }
 }
 
