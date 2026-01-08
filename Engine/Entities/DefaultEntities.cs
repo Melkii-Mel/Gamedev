@@ -143,7 +143,7 @@ public interface ISprite2D
 
 public interface ITrigger2D : ITrigger<INode2D, ITrigger2D>
 {
-    Collider2D Collider { get; set; }
+    Collider2D? Collider { get; set; }
 }
 
 public interface ITrigger<TNode, TParent>
