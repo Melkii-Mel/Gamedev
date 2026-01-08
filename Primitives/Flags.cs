@@ -2,11 +2,11 @@
 
 namespace Primitives;
 
-public class Flags
+public class Flags(ushort raw = 1)
 {
     public event Action<FlagChangedEventArgs>? FlagChanged;
 
-    private ushort _raw = 1;
+    private ushort _raw = raw;
 
     public void Set(byte index, bool state = true)
     {
