@@ -148,7 +148,7 @@ public interface ITrigger2D : ITrigger<INode2D, ITrigger2D>
 
 public interface ITrigger<TNode, TParent>
 {
-    TNode Node { get; set; }
+    TNode Node { get; }
     Flags Mask { get; set; }
     Flags Layer { get; set; }
 
