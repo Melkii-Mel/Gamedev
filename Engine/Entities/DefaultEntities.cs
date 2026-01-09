@@ -87,6 +87,7 @@ public enum HAlignment
     Left,
     Center,
     Right,
+    Stretch,
 }
 
 public enum VAlignment
