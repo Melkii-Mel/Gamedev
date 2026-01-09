@@ -95,6 +95,7 @@ public enum VAlignment
     Top,
     Center,
     Bottom,
+    Stretch,
 }
 
 public interface IImage
