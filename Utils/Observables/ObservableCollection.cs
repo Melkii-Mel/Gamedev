@@ -5,15 +5,25 @@ using System.Linq;
 
 namespace Utils.Observables;
 
-public class ObservableCollection<T>(IList<T>? values = null) : ICollection<T>
+public class ObservableCollection<T> : ICollection<T>
 {
     public event Action<CollectionChangedEventArgs<T>>? CollectionChanged;
 
-    private List<T> _values = values == null ? [] : [.. values];
+    private List<T> _values;
 
     public int Count => _values.Count;
 
     public bool IsReadOnly => false;
+
+    public ObservableCollection()
+    {
+        _values = [];
+    }
+    
+    public ObservableCollection(IList<T> values)
+    {
+        _values = [.. values];
+    }
 
     public void Add(T item)
     {
