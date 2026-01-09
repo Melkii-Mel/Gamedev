@@ -68,7 +68,7 @@ public interface IPanel
     Color BackgroundColor { get; set; }
     Color BorderColor { get; set; }
     float BorderThickness { get; set; }
-    float BorderRadius { get; set; }
+    float CornerRadius { get; set; }
 }
 
 public interface ITextField
