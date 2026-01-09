@@ -39,6 +39,15 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
+    public ReadOnlyDictionary<TIndexKey, HashSet<TValue>> AddOTMIndexFixed<TIndexKey>(Func<TValue, TIndexKey> property)
+    {
+        return AddAbstractIndex<TIndexKey, TIndexKey>(
+            property,
+            (prop, action) => action(prop),
+            null
+        );
+    }
+
     public ReadOnlyDictionary<TIndexKey, HashSet<TValue>> AddMTMIndex<TIndexKey, TCollectionItem>(Func<TValue, Observables.ObservableCollection<TCollectionItem>> property, Func<TCollectionItem, TIndexKey> convertItemFormat)
     {
         return AddAbstractIndex<Observables.ObservableCollection<TCollectionItem>, TIndexKey>(
@@ -67,10 +76,26 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
+    public ReadOnlyDictionary<TIndexKey, HashSet<TValue>> AddMTMIndexFixed<TIndexKey, TCollection, TCollectionItem>(Func<TValue, TCollection> property, Func<TCollectionItem, TIndexKey> convertItemFormat)
+    where TCollection : ICollection<TCollectionItem>
+    {
+        return AddAbstractIndex<TCollection, TIndexKey>(
+            property,
+            (prop, action) =>
+            {
+                foreach (var key in prop)
+                {
+                    action(convertItemFormat(key));
+                }
+            },
+            null
+        );
+    }
+
     private ReadOnlyDictionary<TIndexKey, HashSet<TValue>> AddAbstractIndex<TProp, TIndexKey>(
         Func<TValue, TProp> getProperty, 
         Action<TProp, Action<TIndexKey>> emitKeys,
-        Action<TValue, TProp, Dictionary<TIndexKey, HashSet<TValue>>, Action<TIndexKey>, Action<TIndexKey>> propChangeBinder)
+        Action<TValue, TProp, Dictionary<TIndexKey, HashSet<TValue>>, Action<TIndexKey>, Action<TIndexKey>>? propChangeBinder)
     {
         var dict = new Dictionary<TIndexKey, HashSet<TValue>>();
 
@@ -89,7 +114,7 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
             emitKeys(property, key =>
             {
                 Add(key);
-                propChangeBinder(
+                propChangeBinder?.Invoke(
                     value, 
                     property, 
                     dict,
