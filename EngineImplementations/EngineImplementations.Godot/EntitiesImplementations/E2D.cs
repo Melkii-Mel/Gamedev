@@ -1,4 +1,5 @@
 using EngineImplementations.GodotImplementation.Components;
+using EngineImplementations.GodotImplementation.Resources;
 using Gamedev;
 using Gamedev.Entities;
 using Gamedev.Resources;
@@ -19,7 +20,7 @@ public class E2D : IEntities.I2D
     public EntityComponent<ISprite2D> Sprite(ITexture? texture = null)
     {
         var sprite2d = new Sprite();
-        return new EntityComponent<ISprite2D>(new Entity(sprite2d), new CSprite2D(sprite2d));
+        return new EntityComponent<ISprite2D>(new Entity(sprite2d), new CSprite2D(sprite2d, texture));
     }
 
     public EntityComponent<ITrigger2D> Trigger(Collider2D? collider2D = null)
@@ -35,14 +36,34 @@ public class E2D : IEntities.I2D
     }
 }
 
-internal readonly struct CSprite2D(Sprite sprite2d) : ISprite2D
+internal struct CSprite2D : ISprite2D
 {
-    public INode2D Node => new CNode2D(sprite2d);
+    private readonly Sprite _sprite2d;
+    private ITexture? _texture;
+
+    public CSprite2D(Sprite sprite2d, ITexture? texture)
+    {
+        _sprite2d = sprite2d;
+        _texture = texture;
+    }
+
+    public INode2D Node => new CNode2D(_sprite2d);
 
     public Vector2D<float> Pivot 
     {
-        get => sprite2d.Offset.ToSilk();
-        set => sprite2d.Offset = value.ToGd(); 
+        get => _sprite2d.Offset.ToSilk();
+        set => _sprite2d.Offset = value.ToGd(); 
     }
-    public ITexture Texture { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
+    public ITexture? Texture 
+    { 
+        get => _texture;
+        set
+        {
+            if (value is RTexture rTexture)
+            {
+                _texture = rTexture;
+                _sprite2d.Texture = rTexture.Inner;
+            }
+        }
+    }
 }
