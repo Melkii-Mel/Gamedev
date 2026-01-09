@@ -1,7 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
 using Microsoft.Extensions.Caching.Memory;
 using Silk.NET.Maths;
 using Utils;
+using Utils.DataStructures;
 using Utils.IO;
 
 namespace Gamedev.Resources;
@@ -41,10 +44,43 @@ public class Resources
 
 public class FontRegistry
 {
+    private MultiIndexStore<string, FontData> _multiIndexStore = new();
+    private ReadOnlyDictionary<string, IReadOnlyCollection<FontData>> _pathIndex;
     public FontData DefaultFont { get; } = new FontData("Arial", "./Assets/Fonts/Arial.ttf");
+
+    public FontRegistry()
+    {
+        _pathIndex = _multiIndexStore.AddOTMIndexFixed(fontData => fontData.Path);
+    }
+
+    public void Add(FontData fontData)
+    {
+        _multiIndexStore.Add(fontData);
+    }
+
+    public void Add(IEnumerable<FontData> fontData)
+    {
+        foreach (var item in fontData)
+        {
+            _multiIndexStore.Add(item);
+        }
+    }
+
+    public FontData? ByName(string name)
+    {
+        return _multiIndexStore.PrimaryIndex.TryGetValue(name, out var value) ? value : null;
+    }
+
+    public FontData? ByPath(string path)
+    {
+        return _pathIndex.TryGetValue(path, out var value) ? value.FirstOrDefault() : null;
+    }
 }
 
-public record FontData(string Name, string Path);
+public record FontData(string Name, string Path) : IHasId<string>
+{
+    public string Id => Name;
+}
 
 public class TextureLoader
 {
