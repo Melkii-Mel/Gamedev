@@ -32,10 +32,19 @@ public class Resources
     public Resources(IResources resources)
     {
         TextureLoader = new TextureLoader(resources.TextureLoader);
+        FontRegistry = new FontRegistry();
     }
 
     public TextureLoader TextureLoader { get; }
+    public FontRegistry FontRegistry { get; }
 }
+
+public class FontRegistry
+{
+    public FontData DefaultFont { get; } = new FontData("Arial", "./Assets/Fonts/Arial.ttf");
+}
+
+public record FontData(string Name, string Path);
 
 public class TextureLoader
 {
