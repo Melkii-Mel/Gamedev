@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35931.197 d17.13
+VisualStudioVersion = 17.13.35931.197
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Engine", "Engine\Engine.csproj", "{DB7FEACF-1F38-4611-BBEE-35A95E4E9294}"
 EndProject
@@ -28,6 +28,12 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils.Tests", "Utils.Tests\Utils.Tests.csproj", "{8ACAA57C-9B44-40F8-B77A-26F3407F1318}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HistoryMuseum", "Games\HistoryMuseum\HistoryMuseum.csproj", "{BBFD5D87-11D7-4F8A-B463-8788C549371E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Cli", "Cli", "{7872858D-25B8-42A2-9CB1-5C2CA63B5C00}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PresetGen", "Tools\Cli\PresetGen\PresetGen.csproj", "{EC5C1409-6359-4228-90AF-E209AB6186DF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +81,10 @@ Global
 		{BBFD5D87-11D7-4F8A-B463-8788C549371E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BBFD5D87-11D7-4F8A-B463-8788C549371E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BBFD5D87-11D7-4F8A-B463-8788C549371E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC5C1409-6359-4228-90AF-E209AB6186DF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC5C1409-6359-4228-90AF-E209AB6186DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC5C1409-6359-4228-90AF-E209AB6186DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC5C1409-6359-4228-90AF-E209AB6186DF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -85,6 +95,8 @@ Global
 		{C215F9BF-CEE3-416D-97D3-40C289F29ED2} = {B32587D6-F17A-4A81-BCD1-9B8ADCD40A70}
 		{F73CA3FC-F437-4F55-92A5-9AC666470C62} = {B32587D6-F17A-4A81-BCD1-9B8ADCD40A70}
 		{BBFD5D87-11D7-4F8A-B463-8788C549371E} = {A8DF04AA-686F-4298-8B77-4DD48F6A3F0B}
+		{7872858D-25B8-42A2-9CB1-5C2CA63B5C00} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
+		{EC5C1409-6359-4228-90AF-E209AB6186DF} = {7872858D-25B8-42A2-9CB1-5C2CA63B5C00}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {19E06BAE-9553-41BC-9A11-2912191186BC}
