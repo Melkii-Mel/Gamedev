@@ -140,7 +140,7 @@ public interface ISprite2D
     /// Engine implementations must respect this default when providing the sprite.
     /// </summary>
     Vector2D<float> Pivot { get; set; }
-    ITexture Texture { get; set; }
+    ITexture? Texture { get; set; }
 }
 
 public interface ITrigger2D : ITrigger<INode2D, ITrigger2D>
