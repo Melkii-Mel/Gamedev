@@ -1,11 +1,9 @@
 using EngineImplementations.GodotImplementation.Components;
-using EngineImplementations.GodotImplementation.Resources;
 using Gamedev;
 using Gamedev.Entities;
 using Gamedev.Resources;
 using Godot;
 using Primitives;
-using Silk.NET.Maths;
 
 namespace EngineImplementations.GodotImplementation.EntitiesImplementations;
 
@@ -33,37 +31,5 @@ public class E2D : IEntities.I2D
             cTrigger2d.Collider = collider2D;
         }
         return new EntityComponent<ITrigger2D>(new Entity(trigger2D), cTrigger2d);
-    }
-}
-
-internal struct CSprite2D : ISprite2D
-{
-    private readonly Sprite _sprite2d;
-    private ITexture? _texture;
-
-    public CSprite2D(Sprite sprite2d, ITexture? texture)
-    {
-        _sprite2d = sprite2d;
-        _texture = texture;
-    }
-
-    public INode2D Node => new CNode2D(_sprite2d);
-
-    public Vector2D<float> Pivot 
-    {
-        get => _sprite2d.Offset.ToSilk();
-        set => _sprite2d.Offset = value.ToGd(); 
-    }
-    public ITexture? Texture 
-    { 
-        get => _texture;
-        set
-        {
-            if (value is RTexture rTexture)
-            {
-                _texture = rTexture;
-                _sprite2d.Texture = rTexture.Inner;
-            }
-        }
     }
 }
