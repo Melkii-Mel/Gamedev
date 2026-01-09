@@ -65,7 +65,7 @@ public interface IButton
 public interface IPanel
 {
     IControl Control { get; }
-    Color BackgroundColor { get; }
+    Color BackgroundColor { get; set; }
     Color BorderColor { get; set; }
     float BorderThickness { get; set; }
     float BorderRadius { get; set; }
