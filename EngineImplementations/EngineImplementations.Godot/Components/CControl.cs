@@ -47,4 +47,10 @@ public readonly struct CControl(Control control) : IControl
             control.MarginBottom = value.Origin.Y + value.Size.Y;
         }
     }
+
+    public bool Visible
+    {
+        get { return control.Visible; }
+        set { control.Visible = value; }
+    }
 }

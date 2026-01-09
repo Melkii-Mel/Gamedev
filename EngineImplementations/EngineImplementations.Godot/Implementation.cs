@@ -5,6 +5,9 @@ using EngineImplementations.GodotImplementation.EntitiesImplementations;
 using Gamedev;
 using Gamedev.Debugging;
 using Gamedev.Entities;
+using Gamedev.InputSystem.Api;
+using Gamedev.InputSystem.Api.Devices;
+using Gamedev.Resources;
 using Godot;
 
 namespace EngineImplementations.GodotImplementation;
@@ -16,6 +19,10 @@ public class Implementation : IEngine
         Update = update;
         PhysicsUpdate = physicsUpdate;
         Root = new EntityComponent<INode>(new Entity(root), new CNode());
+
+        var inputCenter = new InputCenter();
+        root.AddChild(inputCenter);
+        Input = new Input(inputCenter);
     }
 
     public event Action<double>? Update;
@@ -31,6 +38,83 @@ public class Implementation : IEngine
     public IEntities Entities { get; } = new Entities();
     public EntityComponent<INode> Root { get; }
     public IDebugOutput DebugOutput { get; } = new DebugOutput();
+
+    public IResources Resources { get; } = new GDResources();
+
+    public IInput Input { get; }
+}
+
+public class GDResources : IResources
+{
+    public ITextureLoader TextureLoader { get; } = new TextureLoader();
+}
+
+public class InputCenter : Node
+{
+    public event IKeyboard.KeyboardAction? KeyboardAction;
+    public event IMouse.MouseAction? MouseAction;
+    public event IController.ControllerAction? ControllerAction;
+
+    public override void _Input(InputEvent @event)
+    {
+        var e = @event;
+        if (e is InputEventKey eKey)
+        {
+            KeyboardAction?.Invoke(((KeyList)eKey.Scancode).ToString(), eKey.Pressed);
+        }
+        // TODO: Finish after other input devices' API is complete
+    }
+}
+
+public class Input : IInput
+{
+    public Input(InputCenter inputCenter)
+    {
+        Keyboard = new Keyboard(inputCenter);
+        Mouse = new Mouse(inputCenter);
+        Controller = new Controller(inputCenter);
+    }
+    public IKeyboard Keyboard { get; }
+
+    public IMouse Mouse { get; }
+
+    public IController Controller { get; }
+}
+
+internal class Controller : IController
+{
+    public Controller(InputCenter inputCenter)
+    {
+        inputCenter.ControllerAction += () => Action?.Invoke();    
+    }
+
+    public event IController.ControllerAction? Action;
+}
+
+internal class Mouse : IMouse
+{
+    public Mouse(InputCenter inputCenter)
+    {
+        inputCenter.ControllerAction += () => Action?.Invoke();
+    }
+
+    public event IMouse.MouseAction? Action;
+}
+
+public class Keyboard : IKeyboard
+{
+    public event IKeyboard.KeyboardAction? Action;
+
+    public Keyboard(InputCenter inputCenter)
+    {
+        inputCenter.KeyboardAction += (k, d) => Action?.Invoke(k, d);
+    }
+
+    public bool IsKeyDown(string key)
+    {
+        // Quick-patch solution
+        return Godot.Input.IsPhysicalKeyPressed((int)Enum.Parse(typeof(KeyList), key.Capitalize()));
+    }
 }
 
 public class DebugOutput : IDebugOutput

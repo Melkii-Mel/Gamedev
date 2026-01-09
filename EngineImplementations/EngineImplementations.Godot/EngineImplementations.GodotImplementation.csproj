@@ -7,13 +7,14 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\..\Engine\Engine.csproj"/>
-        <PackageReference Include="Godot.NET.Sdk" Version="3.3.0"/>
+        <ProjectReference Include="..\..\Engine\Engine.csproj" />
+        <ProjectReference Include="..\..\Primitives\Primitives.csproj" />
+        <PackageReference Include="Godot.NET.Sdk" Version="3.3.0" />
     </ItemGroup>
 
     <ItemGroup>
-        <None Remove="assemblies\**"/>
-        <Compile Remove="assemblies\**"/>
+        <None Remove="assemblies\**" />
+        <Compile Remove="assemblies\**" />
     </ItemGroup>
 
     <ItemGroup>
