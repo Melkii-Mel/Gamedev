@@ -9,7 +9,7 @@ public class TypeMap
 
     public T Set<T>(T value) where T : notnull
     {
-        _map.Add(typeof(T), value);
+        _map[typeof(T)] = value;
         return value;
     }
 
