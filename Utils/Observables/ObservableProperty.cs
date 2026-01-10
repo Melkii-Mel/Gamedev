@@ -4,9 +4,8 @@ namespace Utils.Observables;
 
 public class ObservableProperty<T>(T value)
 {
-    public event Action<PropertyChangedEventArgs<T>>? PropertyChanged;
-
     private T _value = value;
+
     public T Value
     {
         get => _value;
@@ -14,9 +13,11 @@ public class ObservableProperty<T>(T value)
         {
             var old = _value;
             _value = value;
-            PropertyChanged?.Invoke(new(old, value));
+            PropertyChanged?.Invoke(new PropertyChangedEventArgs<T>(old, value));
         }
     }
+
+    public event Action<PropertyChangedEventArgs<T>>? PropertyChanged;
 }
 
 public record PropertyChangedEventArgs<T>(T Old, T New);

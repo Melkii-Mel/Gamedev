@@ -5,5 +5,5 @@ public enum TopDownDirection
     Up,
     Down,
     Left,
-    Right
+    Right,
 }

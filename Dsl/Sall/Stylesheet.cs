@@ -118,9 +118,9 @@ public record StateMapSelector(State[] StateMap) : Selector;
 
 public abstract record AxesSelector : Selector;
 
-public record ReverseSelector() : Selector;
+public record ReverseSelector : Selector;
 
-public record UniqueSelector() : Selector;
+public record UniqueSelector : Selector;
 
 public record ChildrenSelector(Range? Range) : AxesSelector;
 

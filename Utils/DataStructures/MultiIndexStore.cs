@@ -7,15 +7,16 @@ namespace Utils.DataStructures;
 
 public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
 {
-    public ReadOnlyDictionary<TPKey, TValue> PrimaryIndex { get; }
+    private readonly List<Action<TValue>> _indexUpdates = [];
 
     private readonly Dictionary<TPKey, TValue> _primaryIndex = [];
-    private readonly List<Action<TValue>> _indexUpdates = [];
 
     public MultiIndexStore()
     {
-        PrimaryIndex = new(_primaryIndex);
+        PrimaryIndex = new ReadOnlyDictionary<TPKey, TValue>(_primaryIndex);
     }
+
+    public ReadOnlyDictionary<TPKey, TValue> PrimaryIndex { get; }
 
     public void Add(TValue value)
     {
@@ -23,14 +24,15 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         _indexUpdates.ForEach(update => update(value));
     }
 
-    public Index<TIndexKey, TValue> AddOTMIndex<TIndexKey>(Func<TValue, ObservableProperty<TIndexKey>> property)
+    public Index<TIndexKey, TValue> AddOneToManyIndex<TIndexKey>(Func<TValue, ObservableProperty<TIndexKey>> property)
+        where TIndexKey : notnull
     {
         return AddAbstractIndex<ObservableProperty<TIndexKey>, TIndexKey>(
-            property, 
+            property,
             (prop, action) => action(prop.Value),
-            (value, property, dict, add, remove) =>
+            (_, prop, _, add, remove) =>
             {
-                property.PropertyChanged += args =>
+                prop.PropertyChanged += args =>
                 {
                     remove(args.Old);
                     add(args.New);
@@ -39,7 +41,8 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
-    public Index<TIndexKey, TValue> AddOTMIndexFixed<TIndexKey>(Func<TValue, TIndexKey> property) where TIndexKey : notnull
+    public Index<TIndexKey, TValue> AddOneToManyIndexFixed<TIndexKey>(Func<TValue, TIndexKey> property)
+        where TIndexKey : notnull
     {
         return AddAbstractIndex<TIndexKey, TIndexKey>(
             property,
@@ -48,65 +51,53 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
-    public Index<TIndexKey, TValue> AddMTMIndex<TIndexKey, TCollectionItem>(Func<TValue, Observables.ObservableCollection<TCollectionItem>> property, Func<TCollectionItem, TIndexKey> convertItemFormat) where TIndexKey : notnull
+    public Index<TIndexKey, TValue> AddManyToManyIndex<TIndexKey, TCollectionItem>(
+        Func<TValue, Observables.ObservableCollection<TCollectionItem>> property,
+        Func<TCollectionItem, TIndexKey> convertItemFormat) where TIndexKey : notnull
     {
         return AddAbstractIndex<Observables.ObservableCollection<TCollectionItem>, TIndexKey>(
-            property, 
-            (prop, action) => 
+            property,
+            (prop, action) =>
             {
-                foreach (var key in prop) 
-                { 
-                    action(convertItemFormat(key));
-                }
-            }, 
-            (value, property, dict, add, remove) => 
+                foreach (var key in prop) action(convertItemFormat(key));
+            },
+            (_, prop, _, add, remove) =>
             {
-                property.CollectionChanged += args =>
+                prop.CollectionChanged += args =>
                 {
-                    foreach (var key in args.Old ?? [])
-                    {
-                        remove(convertItemFormat(key));
-                    }
-                    foreach (var key in args.New ?? [])
-                    {
-                        add(convertItemFormat(key));
-                    }
+                    foreach (var key in args.Old ?? []) remove(convertItemFormat(key));
+                    foreach (var key in args.New ?? []) add(convertItemFormat(key));
                 };
             }
         );
     }
 
-    public Index<TIndexKey, TValue> AddMTMIndexFixed<TIndexKey, TCollection, TCollectionItem>(Func<TValue, TCollection> property, Func<TCollectionItem, TIndexKey> convertItemFormat)
-    where TCollection : ICollection<TCollectionItem> where TIndexKey : notnull
+    public Index<TIndexKey, TValue> AddManyToManyIndexFixed<TIndexKey, TCollection, TCollectionItem>(
+        Func<TValue, TCollection> property, Func<TCollectionItem, TIndexKey> convertItemFormat)
+        where TCollection : ICollection<TCollectionItem> where TIndexKey : notnull
     {
         return AddAbstractIndex<TCollection, TIndexKey>(
             property,
             (prop, action) =>
             {
-                foreach (var key in prop)
-                {
-                    action(convertItemFormat(key));
-                }
+                foreach (var key in prop) action(convertItemFormat(key));
             },
             null
         );
     }
 
     private Index<TIndexKey, TValue> AddAbstractIndex<TProp, TIndexKey>(
-        Func<TValue, TProp> getProperty, 
+        Func<TValue, TProp> getProperty,
         Action<TProp, Action<TIndexKey>> emitKeys,
-        Action<TValue, TProp, Index<TIndexKey, TValue>, Action<TIndexKey>, Action<TIndexKey>>? propChangeBinder) where TIndexKey : notnull
+        Action<TValue, TProp, Index<TIndexKey, TValue>, Action<TIndexKey>, Action<TIndexKey>>? propChangeBinder)
+        where TIndexKey : notnull
     {
         var dict = new Dictionary<TIndexKey, HashSet<TValue>>();
         var index = new Index<TIndexKey, TValue>(dict);
 
         if (PrimaryIndex.Values != null)
-        {
             foreach (var value in PrimaryIndex.Values)
-            {
                 IndexValue(value);
-            }
-        }
 
         _indexUpdates.Add(IndexValue);
 
@@ -117,43 +108,35 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
             var property = getProperty(value);
             emitKeys(property, key =>
             {
-                Add(key);
+                AddKey(key);
                 propChangeBinder?.Invoke(
-                    value, 
-                    property, 
+                    value,
+                    property,
                     index,
-                    Add,
+                    AddKey,
                     Remove
                 );
             });
 
             return;
 
-            void Add(TIndexKey key)
+            void AddKey(TIndexKey key)
             {
-                if (!dict.TryGetValue(key, out var set))
-                {
-                    dict[key] = set = new HashSet<TValue>(); 
-                }
-                (set as HashSet<TValue>)!.Add(value);
+                if (!dict.TryGetValue(key, out var set)) dict[key] = set = [];
+                set.Add(value);
             }
 
             void Remove(TIndexKey key)
             {
-                if (dict.TryGetValue(key, out var values))
-                {
-                    (values as HashSet<TValue>)!.Remove(value);
-                    if (values.Count == 0)
-                    {
-                        dict.Remove(key);
-                    }
-                }
+                if (!dict.TryGetValue(key, out var values)) return;
+                values!.Remove(value);
+                if (values.Count == 0) dict.Remove(key);
             }
         }
     }
 }
 
-public interface IHasId<TKey>
+public interface IHasId<out TKey>
 {
     TKey Id { get; }
 }
@@ -164,10 +147,7 @@ public class Index<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> values) where
     {
         get
         {
-            if (values.TryGetValue(index, out var item))
-            {
-                return item;
-            }
+            if (values.TryGetValue(index, out var item)) return item;
             return values[index] = [];
         }
     }

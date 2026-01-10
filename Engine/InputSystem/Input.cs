@@ -9,6 +9,7 @@ public class Input(IInput devices)
     public IInput Devices { get; } = devices;
 
     public InputActionDispatcher Dispatcher { get; } = new(devices);
+
     public void RegisterActions(IEnumerable<InputAction> inputActions)
     {
         Dispatcher.RegisterActions(inputActions);

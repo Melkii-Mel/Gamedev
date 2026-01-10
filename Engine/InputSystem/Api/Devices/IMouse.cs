@@ -2,7 +2,8 @@
 
 public interface IMouse
 {
-    delegate void MouseAction(/*TODO*/);
+    delegate void MouseAction( /*TODO*/);
+
     event MouseAction? Action;
     // TODO
 }

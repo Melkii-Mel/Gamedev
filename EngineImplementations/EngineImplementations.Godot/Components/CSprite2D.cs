@@ -19,21 +19,20 @@ internal struct CSprite2D : ISprite2D
 
     public INode2D Node => new CNode2D(_sprite2d);
 
-    public Vector2D<float> Pivot 
+    public Vector2D<float> Pivot
     {
         get => _sprite2d.Offset.ToSilk();
-        set => _sprite2d.Offset = value.ToGd(); 
+        set => _sprite2d.Offset = value.ToGd();
     }
-    public ITexture? Texture 
-    { 
+
+    public ITexture? Texture
+    {
         get => _texture;
         set
         {
-            if (value is RTexture rTexture)
-            {
-                _texture = rTexture;
-                _sprite2d.Texture = rTexture.Inner;
-            }
+            if (value is not RTexture rTexture) return;
+            _texture = rTexture;
+            _sprite2d.Texture = rTexture.Inner;
         }
     }
 }

@@ -27,20 +27,11 @@ public class SallVisitor
         List<NamedClass> namedClasses = [];
 
         foreach (var s in context.statement())
-        {
             if (s.variable() != null)
-            {
                 variables.Add(VisitVariable(s.variable()));
-            }
             else if (s.anonymousClassDef() != null)
-            {
                 anonymousClasses.Add(VisitAnonymousClassDef(s.anonymousClassDef()));
-            }
-            else if (s.namedClassDef() != null)
-            {
-                namedClasses.Add(VisitNamedClassDef(s.namedClassDef()));
-            }
-        }
+            else if (s.namedClassDef() != null) namedClasses.Add(VisitNamedClassDef(s.namedClassDef()));
 
         return new Stylesheet(variables.ToArray(), anonymousClasses.ToArray(), namedClasses.ToArray());
     }
@@ -172,10 +163,7 @@ public class SallVisitor
 
     private static Range? VisitSliceOption(sallParser.SliceSelectorContext? sliceSelector)
     {
-        if (sliceSelector == null)
-        {
-            return null;
-        }
+        if (sliceSelector == null) return null;
 
         var range = sliceSelector.range();
         return range switch

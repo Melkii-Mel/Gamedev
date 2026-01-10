@@ -50,7 +50,7 @@ public readonly struct CControl(Control control) : IControl
 
     public bool Visible
     {
-        get { return control.Visible; }
-        set { control.Visible = value; }
+        get => control.Visible;
+        set => control.Visible = value;
     }
 }

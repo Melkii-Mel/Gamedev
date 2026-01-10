@@ -1,39 +1,38 @@
-using EngineImplementations.GodotImplementation.Components;
 using EngineImplementations.GodotImplementation.EntitiesImplementations;
 using Gamedev.Entities;
 using Godot;
+using Color = Primitives.Color;
 
 namespace EngineImplementations.GodotImplementation.Components;
 
 internal class CPanel : IPanel
 {
-    private readonly Panel _panel;
     private readonly StyleBoxFlat _styleBox;
 
     public CPanel(Panel panel)
     {
-        _panel = panel;
         Control = new CControl(panel);
         _styleBox = new StyleBoxFlat();
-        _panel.AddStyleboxOverride("panel", _styleBox);
+        panel.AddStyleboxOverride("panel", _styleBox);
     }
 
     public IControl Control { get; }
 
-    public Primitives.Color BackgroundColor
+    public Color BackgroundColor
     {
         get => _styleBox.BgColor.ToPrimitives();
         set => _styleBox.BgColor = value.ToGd();
     }
 
-    public Primitives.Color BorderColor 
+    public Color BorderColor
     {
-        get => _styleBox.BorderColor.ToPrimitives(); 
+        get => _styleBox.BorderColor.ToPrimitives();
         set => _styleBox.BorderColor = value.ToGd();
     }
-    public float BorderThickness 
-    { 
-        get => _styleBox.BorderWidthTop; 
+
+    public float BorderThickness
+    {
+        get => _styleBox.BorderWidthTop;
         set
         {
             var v = (int)value;
@@ -43,9 +42,10 @@ internal class CPanel : IPanel
             _styleBox.BorderWidthTop = v;
         }
     }
-    public float CornerRadius 
-    { 
-        get => _styleBox.CornerRadiusTopRight; 
+
+    public float CornerRadius
+    {
+        get => _styleBox.CornerRadiusTopRight;
         set
         {
             var v = (int)value;

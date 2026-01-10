@@ -114,6 +114,13 @@ public class Text
         setter(GetValue());
     }
 
-    public static implicit operator Text(string s) => new(s);
-    public static implicit operator string(Text t) => t.GetValue();
+    public static implicit operator Text(string s)
+    {
+        return new Text(s);
+    }
+
+    public static implicit operator string(Text t)
+    {
+        return t.GetValue();
+    }
 }

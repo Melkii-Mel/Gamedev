@@ -9,6 +9,7 @@ using Gamedev.InputSystem.Api;
 using Gamedev.InputSystem.Api.Devices;
 using Gamedev.Resources;
 using Godot;
+using TextureLoader = EngineImplementations.GodotImplementation.Resources.TextureLoader;
 
 namespace EngineImplementations.GodotImplementation;
 
@@ -39,12 +40,12 @@ public class Implementation : IEngine
     public EntityComponent<INode> Root { get; }
     public IDebugOutput DebugOutput { get; } = new DebugOutput();
 
-    public IResources Resources { get; } = new GDResources();
+    public IResources Resources { get; } = new GdResources();
 
     public IInput Input { get; }
 }
 
-public class GDResources : IResources
+public class GdResources : IResources
 {
     public ITextureLoader TextureLoader { get; } = new TextureLoader();
 }
@@ -57,11 +58,7 @@ public class InputCenter : Node
 
     public override void _Input(InputEvent @event)
     {
-        var e = @event;
-        if (e is InputEventKey eKey)
-        {
-            KeyboardAction?.Invoke(((KeyList)eKey.Scancode).ToString(), eKey.Pressed);
-        }
+        if (@event is InputEventKey eKey) KeyboardAction?.Invoke(((KeyList)eKey.Scancode).ToString(), eKey.Pressed);
         // TODO: Finish after other input devices' API is complete
     }
 }
@@ -74,6 +71,7 @@ public class Input : IInput
         Mouse = new Mouse(inputCenter);
         Controller = new Controller(inputCenter);
     }
+
     public IKeyboard Keyboard { get; }
 
     public IMouse Mouse { get; }
@@ -85,7 +83,7 @@ internal class Controller : IController
 {
     public Controller(InputCenter inputCenter)
     {
-        inputCenter.ControllerAction += () => Action?.Invoke();    
+        inputCenter.ControllerAction += () => Action?.Invoke();
     }
 
     public event IController.ControllerAction? Action;
@@ -103,12 +101,12 @@ internal class Mouse : IMouse
 
 public class Keyboard : IKeyboard
 {
-    public event IKeyboard.KeyboardAction? Action;
-
     public Keyboard(InputCenter inputCenter)
     {
         inputCenter.KeyboardAction += (k, d) => Action?.Invoke(k, d);
     }
+
+    public event IKeyboard.KeyboardAction? Action;
 
     public bool IsKeyDown(string key)
     {

@@ -1,5 +1,4 @@
-﻿using System.Data;
-using Silk.NET.Maths;
+﻿using Silk.NET.Maths;
 
 namespace Primitives;
 

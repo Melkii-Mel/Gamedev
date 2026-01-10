@@ -9,6 +9,8 @@ internal class CImage : IImage
 {
     private readonly TextureRect _textureRect;
 
+    private RTexture? _texture;
+
     public CImage(TextureRect textureRect, ITexture? texture)
     {
         Control = new CControl(textureRect);
@@ -18,8 +20,7 @@ internal class CImage : IImage
 
     public IControl Control { get; }
 
-    private RTexture? _texture;
-    public ITexture? Texture 
+    public ITexture? Texture
     {
         get => _texture;
         set

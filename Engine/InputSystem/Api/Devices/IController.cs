@@ -2,7 +2,8 @@
 
 public interface IController
 {
-    delegate void ControllerAction(/*TODO*/);
+    delegate void ControllerAction( /*TODO*/);
+
     event ControllerAction? Action;
     // TODO
 }

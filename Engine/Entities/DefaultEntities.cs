@@ -133,13 +133,13 @@ public interface ISprite2D
     INode2D Node { get; }
 
     /// <summary>
-    /// The pivot of the sprite relative to its size:
-    /// (0,0) = top-left, (1,1) = bottom-right.
-    /// Defaults to (0.5, 0.5) to center the sprite.
-    /// 
-    /// Engine implementations must respect this default when providing the sprite.
+    ///     The pivot of the sprite relative to its size:
+    ///     (0,0) = top-left, (1,1) = bottom-right.
+    ///     Defaults to (0.5, 0.5) to center the sprite.
+    ///     Engine implementations must respect this default when providing the sprite.
     /// </summary>
     Vector2D<float> Pivot { get; set; }
+
     ITexture? Texture { get; set; }
 }
 
@@ -148,7 +148,7 @@ public interface ITrigger2D : ITrigger<INode2D, ITrigger2D>
     Collider2D? Collider { get; set; }
 }
 
-public interface ITrigger<TNode, TParent>
+public interface ITrigger<out TNode, out TParent>
 {
     TNode Node { get; }
     Flags Mask { get; set; }
@@ -159,8 +159,6 @@ public interface ITrigger<TNode, TParent>
     event Action<TParent>? OnExit;
 }
 
-public interface INode3D
-{
-}
+public interface INode3D;
 
 public interface INode;

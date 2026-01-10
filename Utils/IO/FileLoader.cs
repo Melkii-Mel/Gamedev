@@ -9,14 +9,47 @@ namespace Utils.IO;
 
 public static class FileLoader
 {
-    private const string Assets = "Assets";
-
     public enum LoadingPriority
     {
         External,
 
         // ReSharper disable once UnusedMember.Global
         Embedded,
+    }
+
+    private const string Assets = "Assets";
+
+    private static Dictionary<string, string>? _assemblyFilesMap;
+
+    private static Assembly? _assembly;
+
+    private static Dictionary<string, string> AssemblyFilesMap
+    {
+        get
+        {
+            if (_assemblyFilesMap is not null) return _assemblyFilesMap;
+            _assemblyFilesMap = ListAssemblyFiles().ToDictionary(k => k, k =>
+            {
+                var path = k.Replace('.', '/');
+                var assetsIndex = path.IndexOf(Assets + "/", StringComparison.InvariantCulture);
+                if (assetsIndex >= 0) path = path.Substring(assetsIndex + Assets.Length + 1);
+
+                var last = path.LastIndexOf('/');
+                if (last >= 0) path = path.Substring(0, last) + '.' + path.Substring(last + 1);
+
+                return path;
+            });
+            return _assemblyFilesMap;
+        }
+    }
+
+    private static Assembly Assembly
+    {
+        get
+        {
+            _assembly ??= Assembly.GetExecutingAssembly();
+            return _assembly;
+        }
     }
 
     public static string? LoadTextFile(string path, LoadingPriority priority = LoadingPriority.External)
@@ -45,7 +78,7 @@ public static class FileLoader
     private static byte[]? LoadEmbeddedResource(string fileName)
     {
         if (!AssemblyFilesMap.TryGetValue(fileName, out fileName)) return null;
-        using Stream? stream = Assembly.GetManifestResourceStream(fileName);
+        using var stream = Assembly.GetManifestResourceStream(fileName);
         if (stream is null) return null;
         using var ms = new MemoryStream();
         stream.CopyTo(ms);
@@ -54,7 +87,7 @@ public static class FileLoader
 
     private static string? TryDecodeBytesOption(byte[]? bytes)
     {
-        return bytes != null ? Encoding.UTF8.GetString(bytes) : null;
+        return bytes != null ? DecodeBytes(bytes) : null;
     }
 
     private static string DecodeBytes(byte[] bytes)
@@ -62,47 +95,8 @@ public static class FileLoader
         return Encoding.UTF8.GetString(bytes);
     }
 
-    private static Dictionary<string, string> AssemblyFilesMap
-    {
-        get
-        {
-            if (_assemblyFilesMap is not null) return _assemblyFilesMap;
-            _assemblyFilesMap = ListAssemblyFiles().ToDictionary(k => k, k =>
-            {
-                var path = k.Replace('.', '/');
-                var assetsIndex = path.IndexOf(Assets + "/", StringComparison.InvariantCulture);
-                if (assetsIndex >= 0)
-                {
-                    path = path.Substring(assetsIndex + Assets.Length + 1);
-                }
-
-                var last = path.LastIndexOf('/');
-                if (last >= 0)
-                {
-                    path = path.Substring(0, last) + '.' + path.Substring(last + 1);
-                }
-
-                return path;
-            });
-            return _assemblyFilesMap;
-        }
-    }
-
-    private static Dictionary<string, string>? _assemblyFilesMap;
-
     private static string[] ListAssemblyFiles()
     {
         return Assembly.GetManifestResourceNames();
     }
-
-    private static Assembly Assembly
-    {
-        get
-        {
-            _assembly ??= Assembly.GetExecutingAssembly();
-            return _assembly;
-        }
-    }
-
-    private static Assembly? _assembly;
 }

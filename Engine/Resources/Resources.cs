@@ -1,7 +1,5 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using Microsoft.Extensions.Caching.Memory;
 using Silk.NET.Maths;
 using Utils;
 using Utils.DataStructures;
@@ -44,14 +42,15 @@ public class Resources
 
 public class FontRegistry
 {
-    private MultiIndexStore<string, FontData> _multiIndexStore = new();
-    private Index<string, FontData> _pathIndex;
-    public FontData DefaultFont { get; } = new FontData("Arial", "./Assets/Fonts/Arial.ttf");
+    private readonly MultiIndexStore<string, FontData> _multiIndexStore = new();
+    private readonly Index<string, FontData> _pathIndex;
 
     public FontRegistry()
     {
-        _pathIndex = _multiIndexStore.AddOTMIndexFixed(fontData => fontData.Path);
+        _pathIndex = _multiIndexStore.AddOneToManyIndexFixed(fontData => fontData.Path);
     }
+
+    public FontData DefaultFont { get; } = new("Arial", "./Assets/Fonts/Arial.ttf");
 
     public void Add(FontData fontData)
     {
@@ -60,10 +59,7 @@ public class FontRegistry
 
     public void Add(IEnumerable<FontData> fontData)
     {
-        foreach (var item in fontData)
-        {
-            _multiIndexStore.Add(item);
-        }
+        foreach (var item in fontData) _multiIndexStore.Add(item);
     }
 
     public FontData? ByName(string name)
@@ -90,8 +86,6 @@ public class TextureLoader
     {
         _textureLoader = textureLoader;
     }
-
-    private readonly MemoryCache _cache = new(new MemoryCacheOptions());
 
     public ITexture? FromFileName(string path, bool shouldCache = true, bool tryGetCached = true)
     {

@@ -112,9 +112,9 @@ public class Engine
         E = engine;
         Scene = InitGlobalRoot();
         E.Update += Update;
-        DebugOutput = new(E.DebugOutput);
-        Resources = new(E.Resources);
-        Input = new(E.Input);
+        DebugOutput = new DebugOutput(E.DebugOutput);
+        Resources = new Resources.Resources(E.Resources);
+        Input = new Input(E.Input);
     }
 
     public IEngine E { get; }

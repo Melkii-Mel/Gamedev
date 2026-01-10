@@ -1,15 +1,13 @@
-﻿using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json;
 
 namespace Utils.IO;
 
 public static class Serializer
 {
     /// <summary>
-    /// Optimized for saving save data defined as simple `record` DTOs.
+    ///     Optimized for saving SaveData defined as simple `record` DTOs.
     /// </summary>
-    public static JsonSerializerOptions DefaultSerializerOptions = new()
+    public static readonly JsonSerializerOptions DefaultSerializerOptions = new()
     {
         IgnoreReadOnlyFields = true,
         IgnoreReadOnlyProperties = true,

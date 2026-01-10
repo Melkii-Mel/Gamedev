@@ -17,10 +17,7 @@ public static class Cacher
 
         var result = provider();
 
-        if (shouldCache)
-        {
-            Cache.Set(cacheKey, result);
-        }
+        if (shouldCache) Cache.Set(cacheKey, result);
 
         return result;
     }

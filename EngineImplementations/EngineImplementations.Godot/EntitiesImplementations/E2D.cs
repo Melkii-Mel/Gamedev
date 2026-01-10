@@ -26,10 +26,7 @@ public class E2D : IEntities.I2D
         var trigger2D = new Trigger2D();
         var cTrigger2d = new CTrigger2D(trigger2D);
         trigger2D.CTrigger2D = cTrigger2d;
-        if (collider2D != null)
-        {
-            cTrigger2d.Collider = collider2D;
-        }
+        if (collider2D != null) cTrigger2d.Collider = collider2D;
         return new EntityComponent<ITrigger2D>(new Entity(trigger2D), cTrigger2d);
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.CommandLine;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text.Json;
 using AutoFixture;
@@ -9,13 +10,14 @@ namespace PresetGen;
 
 internal static class Gen
 {
-    private static readonly string[] ValidExtensions = [".csproj", ".dll"];
-
     private const string PathArgument = "assembly-or-project-path";
     private const string TypeArgument = "type-full-name";
     private const string PathExpectation = "expected a path to .dll, .csproj, or project directory";
     private const string TypeExpectation = "expected a full target type name, including namespace";
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1869:Cache and reuse 'JsonSerializerOptions' instances", Justification = "<Pending>")]
+    private static readonly string[] ValidExtensions = [".csproj", ".dll"];
+
+    [SuppressMessage("Performance", "CA1869:Cache and reuse 'JsonSerializerOptions' instances",
+        Justification = "<Pending>")]
     public static Command Command()
     {
         var pathArg = new Argument<FileSystemInfo>(PathArgument)
@@ -52,9 +54,11 @@ internal static class Gen
             var type = LoadType(path, typeName);
             if (type is null)
             {
-                new Err().Message($"loaded assembly doesn't contain {typeName} type", "ensure the full name is specified");
+                new Err().Message($"loaded assembly doesn't contain {typeName} type",
+                    "ensure the full name is specified");
                 return;
             }
+
             var fixture = new Fixture();
             fixture.Register(() => 0);
             fixture.Register(() => 0f);
@@ -70,6 +74,9 @@ internal static class Gen
                 IgnoreReadOnlyFields = true,
                 IgnoreReadOnlyProperties = true,
             }));
+
+            return;
+
             static Type? LoadType(FileSystemInfo? path, string type)
             {
                 switch (path)
@@ -82,19 +89,21 @@ internal static class Gen
                             _ => throw new NotSupportedException(),
                         };
                     case DirectoryInfo directory:
-                        var projectFiles = Directory.GetFiles(directory.FullName, "*.csproj", SearchOption.TopDirectoryOnly);
+                        var projectFiles = Directory.GetFiles(directory.FullName, "*.csproj",
+                            SearchOption.TopDirectoryOnly);
                         var err = new Err(Expectation: PathExpectation);
-                        if (projectFiles.Length == 0)
+                        switch (projectFiles.Length)
                         {
-                            err.Message("path doesn't contain .csproj file");
-                            return null;
+                            case 0:
+                                err.Message("path doesn't contain .csproj file");
+                                return null;
+                            case > 1:
+                                err.Message("path can't contain multiple .csproj files");
+                                return null;
+                            default:
+                                return LoadTypeFromProjectName(projectFiles[0], type);
                         }
-                        if (projectFiles.Length > 1)
-                        {
-                            err.Message("path can't contain multiple .csproj files");
-                            return null;
-                        }
-                        return LoadTypeFromProjectName(projectFiles[0], type);
+
                     default:
                         throw new NotSupportedException();
                 }
@@ -111,10 +120,10 @@ internal static class Gen
         static string BuildProject(string projName)
         {
             Console.WriteLine(projName);
-            return ProcessSpawner.Spawn("dotnet", "msbuild", $"\"{projName}\" -t:Build -getProperty:TargetPath -nologo -v:q -p:CopyLocalLockFileAssemblies=true", true, (code, @out, err) =>
-            {
-                new Err().Message(@out, err, $"build failed with exit code {code}");
-            }).Trim();
+            return ProcessSpawner.Spawn("dotnet", "msbuild",
+                    $"\"{projName}\" -t:Build -getProperty:TargetPath -nologo -v:q -p:CopyLocalLockFileAssemblies=true",
+                    true, (code, @out, err) => { new Err().Message(@out, err, $"build failed with exit code {code}"); })
+                .Trim();
         }
     }
 
@@ -130,6 +139,7 @@ internal static class Gen
             new Err().Message("Could not load assembly for the following reason: " + e.Message);
             return null;
         }
+
         return assembly.GetType(typeName);
     }
 }

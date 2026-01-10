@@ -4,5 +4,5 @@ public enum Device
 {
     Keyboard,
     Mouse,
-    Controller
+    Controller,
 }

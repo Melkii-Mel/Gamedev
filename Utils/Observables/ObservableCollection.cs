@@ -7,23 +7,21 @@ namespace Utils.Observables;
 
 public class ObservableCollection<T> : ICollection<T>
 {
-    public event Action<CollectionChangedEventArgs<T>>? CollectionChanged;
-
     private List<T> _values;
-
-    public int Count => _values.Count;
-
-    public bool IsReadOnly => false;
 
     public ObservableCollection()
     {
         _values = [];
     }
-    
+
     public ObservableCollection(IList<T> values)
     {
         _values = [.. values];
     }
+
+    public int Count => _values.Count;
+
+    public bool IsReadOnly => false;
 
     public void Add(T item)
     {
@@ -31,37 +29,11 @@ public class ObservableCollection<T> : ICollection<T>
         CollectionChanged?.Invoke(new CollectionChangedEventArgs<T>(null, [item]));
     }
 
-    public void Add(IEnumerable<T> items)
-    {
-        _values.AddRange(items);
-        CollectionChanged?.Invoke(new CollectionChangedEventArgs<T>(null, items));
-    }
-
     public bool Remove(T item)
     {
         var removed = _values.Remove(item);
-        if (removed)
-        {
-            CollectionChanged?.Invoke(new CollectionChangedEventArgs<T>([item], null));
-        }
+        if (removed) CollectionChanged?.Invoke(new CollectionChangedEventArgs<T>([item], null));
         return removed;
-    }
-
-    public IEnumerable<T> Remove(IEnumerable<T> items)
-    {
-        var values = YieldRemove().ToList();
-        CollectionChanged?.Invoke(new CollectionChangedEventArgs<T>(null, values));
-        return values;
-        IEnumerable<T> YieldRemove()
-        {
-            foreach (var item in items)
-            {
-                if (_values.Remove(item))
-                {
-                    yield return item;
-                }
-            }
-        }
     }
 
     public void Clear()
@@ -89,6 +61,29 @@ public class ObservableCollection<T> : ICollection<T>
     IEnumerator IEnumerable.GetEnumerator()
     {
         return GetEnumerator();
+    }
+
+    public event Action<CollectionChangedEventArgs<T>>? CollectionChanged;
+
+    public void Add(IEnumerable<T> items)
+    {
+        var collection = items as T[] ?? items.ToArray();
+        _values.AddRange(collection);
+        CollectionChanged?.Invoke(new CollectionChangedEventArgs<T>(null, collection));
+    }
+
+    public IEnumerable<T> Remove(IEnumerable<T> items)
+    {
+        var values = YieldRemove().ToList();
+        CollectionChanged?.Invoke(new CollectionChangedEventArgs<T>(null, values));
+        return values;
+
+        IEnumerable<T> YieldRemove()
+        {
+            foreach (var item in items)
+                if (_values.Remove(item))
+                    yield return item;
+        }
     }
 }
 

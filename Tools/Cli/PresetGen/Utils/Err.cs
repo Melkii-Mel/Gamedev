@@ -7,30 +7,21 @@ public record Err(CommandResult? CommandResult = null, string? Expectation = nul
 {
     public void Message(params string[] messages)
     {
-        const string Error = "error: ";
-        const string Indent = "\n       ";
+        const string error = "error: ";
+        const string indent = "\n       ";
 
         var sb = new StringBuilder();
         if (messages.Length > 0)
         {
-            sb.AppendLine(Error + string.Join(Indent, messages));
-            if (Expectation != null)
-            {
-                sb.AppendLine(Expectation);
-            }
+            sb.AppendLine(error + string.Join(indent, messages));
+            if (Expectation != null) sb.AppendLine(Expectation);
         }
         else
         {
-            if (Expectation != null)
-            {
-                sb.AppendLine(Error + Expectation);
-            }
+            if (Expectation != null) sb.AppendLine(error + Expectation);
         }
 #if DEBUG
-        if (sb.Length == 0)
-        {
-            throw new ArgumentException("No error message or expectation were provided.");
-        }
+        if (sb.Length == 0) throw new ArgumentException("No error message or expectation were provided.");
 #endif
         if (CommandResult == null)
         {

@@ -3,6 +3,7 @@ using Gamedev;
 using Gamedev.Entities;
 using Gamedev.Resources;
 using Godot;
+using Color = Primitives.Color;
 
 namespace EngineImplementations.GodotImplementation.EntitiesImplementations;
 
@@ -42,13 +43,13 @@ public class Ui : IEntities.IUi
 // TODO: Move out
 public static class ColorExtensions
 {
-    public static Primitives.Color ToPrimitives(this Godot.Color color)
+    public static Color ToPrimitives(this Godot.Color color)
     {
-        return new Primitives.Color(color.r, color.g, color.b, color.a);
+        return new Color(color.r, color.g, color.b, color.a);
     }
 
-    public static Color ToGd(this Primitives.Color color)
+    public static Godot.Color ToGd(this Color color)
     {
-        return new Color(color.R, color.G, color.B, color.A);
+        return new Godot.Color(color.R, color.G, color.B, color.A);
     }
 }

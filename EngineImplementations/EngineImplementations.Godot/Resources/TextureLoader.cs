@@ -1,8 +1,7 @@
-﻿using EngineImplementations.GodotImplementation.Resources;
-using Gamedev.Resources;
+﻿using Gamedev.Resources;
 using Godot;
 
-namespace EngineImplementations.GodotImplementation;
+namespace EngineImplementations.GodotImplementation.Resources;
 
 internal class TextureLoader : ITextureLoader
 {

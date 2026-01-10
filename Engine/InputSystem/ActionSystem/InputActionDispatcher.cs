@@ -1,19 +1,19 @@
 ﻿using System;
 using System.Collections.Generic;
-using Utils.DataStructures;
-using Utils;
 using Gamedev.InputSystem.Api;
+using Utils;
+using Utils.DataStructures;
 
 namespace Gamedev.InputSystem.ActionSystem;
 
 public class InputActionDispatcher
 {
-    private readonly TypeMap _listenersMap = new();
     private readonly MultiIndexStore<string, InputAction> _actionsStore = new();
+    private readonly TypeMap _listenersMap = new();
 
     public InputActionDispatcher(IInput devices)
     {
-        var mtmIndex = _actionsStore.AddMTMIndex(action => action.Bindings, binding => (binding.Key, binding.Device));
+        var mtmIndex = _actionsStore.AddManyToManyIndex(action => action.Bindings, binding => (binding.Key, binding.Device));
 
         BindBool();
         BindVec();
@@ -27,12 +27,8 @@ public class InputActionDispatcher
             {
                 var boolInputListeners = GetOrInitInputListeners<bool>();
                 foreach (var action in mtmIndex[(key, Device.Keyboard)])
-                {
-                    if (action.ValueType == InputValueType.Vec3)
-                    {
+                    if (action.ValueType == InputValueType.Bool)
                         boolInputListeners.Invoke(new InputActionEventArgs<bool>(action.Name, isKeyDown));
-                    }
-                }
             };
             // TODO
         }
@@ -62,10 +58,7 @@ public class InputActionDispatcher
 
     public void RegisterActions(IEnumerable<InputAction> inputActions)
     {
-        foreach (var action in inputActions)
-        {
-            _actionsStore.Add(action);
-        }
+        foreach (var action in inputActions) _actionsStore.Add(action);
     }
 
     private WeakAction<InputActionEventArgs<TValue>> GetOrInitInputListeners<TValue>()
