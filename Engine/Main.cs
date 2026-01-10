@@ -111,7 +111,8 @@ public class Engine
     {
         E = engine;
         Scene = InitGlobalRoot();
-        E.Update += Update;
+        E.Update += delta => Update?.Invoke(delta);
+        E.PhysicsUpdate += delta => PhysicsUpdate?.Invoke(delta);
         DebugOutput = new DebugOutput(E.DebugOutput);
         Resources = new Resources.Resources(E.Resources);
         Input = new Input(E.Input);
@@ -127,6 +128,7 @@ public class Engine
     public Input Input { get; }
 
     public event Action<double>? Update;
+    public event Action<double>? PhysicsUpdate;
 
     private RootGroup InitGlobalRoot()
     {

@@ -17,8 +17,8 @@ public class Implementation : IEngine
 {
     public Implementation(ref Action<double>? update, ref Action<double>? physicsUpdate, Node root)
     {
-        Update = update;
-        PhysicsUpdate = physicsUpdate;
+        update += delta => Update?.Invoke(delta);
+        PhysicsUpdate += delta => PhysicsUpdate?.Invoke(delta);
         Root = new EntityComponent<INode>(new Entity(root), new CNode());
 
         var inputCenter = new InputCenter();
@@ -58,7 +58,7 @@ public class InputCenter : Node
 
     public override void _Input(InputEvent @event)
     {
-        if (@event is InputEventKey eKey) KeyboardAction?.Invoke(((KeyList)eKey.Scancode).ToString(), eKey.Pressed);
+        if (@event is InputEventKey { Echo: false } eKey) KeyboardAction?.Invoke(((KeyList)eKey.Scancode).ToString(), eKey.Pressed);
         // TODO: Finish after other input devices' API is complete
     }
 }
