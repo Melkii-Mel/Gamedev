@@ -1,10 +1,10 @@
 ﻿using Silk.NET.Maths;
+using Utils.Observables;
 
 namespace Utils.Engine.MovementControls;
 
-public class TopDownState(Vector2D<float>? position = null)
-{
-    public Vector2D<float> Position { get; set; } = position ?? default;
-    public Vector2D<float> Velocity { get; set; }
-    public Vector2D<float> CurrentDirection { get; set; }
-}
+public readonly record struct TopDownState(
+    Vector2D<float> Position = default,
+    Vector2D<float> Velocity = default,
+    Vector2D<float> CurrentDirection = default
+);
