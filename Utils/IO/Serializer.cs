@@ -9,6 +9,7 @@ public static class Serializer
     /// </summary>
     public static readonly JsonSerializerOptions DefaultSerializerOptions = new()
     {
+        IncludeFields = true,
         IgnoreReadOnlyFields = true,
         IgnoreReadOnlyProperties = true,
     };
