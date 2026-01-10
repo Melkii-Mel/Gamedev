@@ -46,6 +46,7 @@ public interface IEngine
     IDebugOutput DebugOutput { get; }
     IResources Resources { get; }
     IInput Input { get; }
+    IDisplay Display { get; }
 
     /// <summary>
     ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
@@ -96,6 +97,13 @@ public interface IEntities
     }
 }
 
+public interface IDisplay
+{
+    Vector2D<float> ScreenSize { get; }
+    Vector2D<float> WindowSize { get; }
+    Vector2D<float> ViewportSize { get; }
+}
+
 public static class I2DExtensions
 {
     public static EntityComponent<ITrigger2D> Trigger(this IEntities.I2D i2d, IShape2D shape2D,
@@ -116,6 +124,7 @@ public class Engine
         DebugOutput = new DebugOutput(E.DebugOutput);
         Resources = new Resources.Resources(E.Resources);
         Input = new Input(E.Input);
+        Display = E.Display;
     }
 
     public IEngine E { get; }
@@ -126,6 +135,7 @@ public class Engine
     public DebugOutput DebugOutput { get; }
     public EssentialSettings EssentialSettings { get; } = new();
     public Input Input { get; }
+    public IDisplay Display { get; }
 
     public event Action<double>? Update;
     public event Action<double>? PhysicsUpdate;

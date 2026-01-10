@@ -9,6 +9,7 @@ using Gamedev.InputSystem.Api;
 using Gamedev.InputSystem.Api.Devices;
 using Gamedev.Resources;
 using Godot;
+using Silk.NET.Maths;
 using TextureLoader = EngineImplementations.GodotImplementation.Resources.TextureLoader;
 
 namespace EngineImplementations.GodotImplementation;
@@ -24,8 +25,10 @@ public class Implementation : IEngine
         var inputCenter = new InputCenter();
         root.AddChild(inputCenter);
         Input = new Input(inputCenter);
+        Display = new Display(root);
     }
 
+    public IDisplay Display { get; }
     public event Action<double>? Update;
     public event Action<double>? PhysicsUpdate;
 
@@ -43,6 +46,13 @@ public class Implementation : IEngine
     public IResources Resources { get; } = new GdResources();
 
     public IInput Input { get; }
+}
+
+public class Display(Node node) : IDisplay
+{
+    public Vector2D<float> ScreenSize => OS.GetScreenSize().ToSilk();
+    public Vector2D<float> WindowSize => OS.WindowSize.ToSilk();
+    public Vector2D<float> ViewportSize => node.GetViewport().GetVisibleRect().Size.ToSilk();
 }
 
 public class GdResources : IResources
