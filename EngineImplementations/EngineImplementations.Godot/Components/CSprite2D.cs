@@ -14,7 +14,7 @@ internal struct CSprite2D : ISprite2D
     public CSprite2D(Sprite sprite2d, ITexture? texture)
     {
         _sprite2d = sprite2d;
-        _texture = texture;
+        Texture = texture;
     }
 
     public INode2D Node => new CNode2D(_sprite2d);
