@@ -45,7 +45,7 @@ public class Resources
 public class FontRegistry
 {
     private MultiIndexStore<string, FontData> _multiIndexStore = new();
-    private ReadOnlyDictionary<string, IReadOnlyCollection<FontData>> _pathIndex;
+    private Index<string, FontData> _pathIndex;
     public FontData DefaultFont { get; } = new FontData("Arial", "./Assets/Fonts/Arial.ttf");
 
     public FontRegistry()
@@ -73,7 +73,7 @@ public class FontRegistry
 
     public FontData? ByPath(string path)
     {
-        return _pathIndex.TryGetValue(path, out var value) ? value.FirstOrDefault() : null;
+        return _pathIndex[path].FirstOrDefault();
     }
 }
 

@@ -23,7 +23,7 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         _indexUpdates.ForEach(update => update(value));
     }
 
-    public ReadOnlyDictionary<TIndexKey, IReadOnlyCollection<TValue>> AddOTMIndex<TIndexKey>(Func<TValue, ObservableProperty<TIndexKey>> property)
+    public Index<TIndexKey, TValue> AddOTMIndex<TIndexKey>(Func<TValue, ObservableProperty<TIndexKey>> property)
     {
         return AddAbstractIndex<ObservableProperty<TIndexKey>, TIndexKey>(
             property, 
@@ -39,7 +39,7 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
-    public ReadOnlyDictionary<TIndexKey, IReadOnlyCollection<TValue>> AddOTMIndexFixed<TIndexKey>(Func<TValue, TIndexKey> property)
+    public Index<TIndexKey, TValue> AddOTMIndexFixed<TIndexKey>(Func<TValue, TIndexKey> property) where TIndexKey : notnull
     {
         return AddAbstractIndex<TIndexKey, TIndexKey>(
             property,
@@ -48,7 +48,7 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
-    public ReadOnlyDictionary<TIndexKey, IReadOnlyCollection<TValue>> AddMTMIndex<TIndexKey, TCollectionItem>(Func<TValue, Observables.ObservableCollection<TCollectionItem>> property, Func<TCollectionItem, TIndexKey> convertItemFormat)
+    public Index<TIndexKey, TValue> AddMTMIndex<TIndexKey, TCollectionItem>(Func<TValue, Observables.ObservableCollection<TCollectionItem>> property, Func<TCollectionItem, TIndexKey> convertItemFormat) where TIndexKey : notnull
     {
         return AddAbstractIndex<Observables.ObservableCollection<TCollectionItem>, TIndexKey>(
             property, 
@@ -76,8 +76,8 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
-    public ReadOnlyDictionary<TIndexKey, IReadOnlyCollection<TValue>> AddMTMIndexFixed<TIndexKey, TCollection, TCollectionItem>(Func<TValue, TCollection> property, Func<TCollectionItem, TIndexKey> convertItemFormat)
-    where TCollection : ICollection<TCollectionItem>
+    public Index<TIndexKey, TValue> AddMTMIndexFixed<TIndexKey, TCollection, TCollectionItem>(Func<TValue, TCollection> property, Func<TCollectionItem, TIndexKey> convertItemFormat)
+    where TCollection : ICollection<TCollectionItem> where TIndexKey : notnull
     {
         return AddAbstractIndex<TCollection, TIndexKey>(
             property,
@@ -92,21 +92,25 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
         );
     }
 
-    private ReadOnlyDictionary<TIndexKey, IReadOnlyCollection<TValue>> AddAbstractIndex<TProp, TIndexKey>(
+    private Index<TIndexKey, TValue> AddAbstractIndex<TProp, TIndexKey>(
         Func<TValue, TProp> getProperty, 
         Action<TProp, Action<TIndexKey>> emitKeys,
-        Action<TValue, TProp, Dictionary<TIndexKey, IReadOnlyCollection<TValue>>, Action<TIndexKey>, Action<TIndexKey>>? propChangeBinder)
+        Action<TValue, TProp, Index<TIndexKey, TValue>, Action<TIndexKey>, Action<TIndexKey>>? propChangeBinder) where TIndexKey : notnull
     {
-        var dict = new Dictionary<TIndexKey, IReadOnlyCollection<TValue>>();
+        var dict = new Dictionary<TIndexKey, HashSet<TValue>>();
+        var index = new Index<TIndexKey, TValue>(dict);
 
-        foreach (var value in PrimaryIndex.Values)
+        if (PrimaryIndex.Values != null)
         {
-            IndexValue(value);
+            foreach (var value in PrimaryIndex.Values)
+            {
+                IndexValue(value);
+            }
         }
 
         _indexUpdates.Add(IndexValue);
 
-        return new(dict);
+        return new Index<TIndexKey, TValue>(dict);
 
         void IndexValue(TValue value)
         {
@@ -117,7 +121,7 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
                 propChangeBinder?.Invoke(
                     value, 
                     property, 
-                    dict,
+                    index,
                     Add,
                     Remove
                 );
@@ -152,4 +156,19 @@ public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
 public interface IHasId<TKey>
 {
     TKey Id { get; }
+}
+
+public class Index<TKey, TValue>(Dictionary<TKey, HashSet<TValue>> values) where TKey : notnull
+{
+    public IReadOnlyCollection<TValue> this[TKey index]
+    {
+        get
+        {
+            if (values.TryGetValue(index, out var item))
+            {
+                return item;
+            }
+            return values[index] = [];
+        }
+    }
 }
