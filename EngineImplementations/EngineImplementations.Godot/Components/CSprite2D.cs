@@ -3,6 +3,7 @@ using Gamedev.Entities;
 using Gamedev.Resources;
 using Godot;
 using Silk.NET.Maths;
+using Engine = Gamedev.Engine;
 
 namespace EngineImplementations.GodotImplementation.Components;
 
@@ -31,6 +32,8 @@ internal struct CSprite2D : ISprite2D
         set
         {
             if (value is not RTexture rTexture) return;
+            var textureLoaderDefaults = Gamedev.EngineInstance.E.Resources.TextureLoader.Defaults;
+            rTexture.Filter = textureLoaderDefaults.Filter;
             _texture = rTexture;
             _sprite2d.Texture = rTexture.Inner;
         }

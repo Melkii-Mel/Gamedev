@@ -22,6 +22,7 @@ public interface ITextureLoader
 public interface ITexture
 {
     Vector2D<int> Size { get; }
+    bool Filter { get; set; }
 }
 
 #endregion
@@ -82,6 +83,8 @@ public class TextureLoader
 {
     private readonly ITextureLoader _textureLoader;
 
+    public TextureDefaults Defaults { get; set; } = new();
+
     public TextureLoader(ITextureLoader textureLoader)
     {
         _textureLoader = textureLoader;
@@ -95,6 +98,11 @@ public class TextureLoader
             return bytes == null ? null : _textureLoader.FromBytes(bytes);
         });
     }
+}
+
+public class TextureDefaults
+{
+    public bool Filter { get; set; } = true;
 }
 
 #endregion
