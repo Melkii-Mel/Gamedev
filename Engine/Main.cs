@@ -150,7 +150,7 @@ public class Engine
     public Resources.Resources Resources { get; }
 
     public DebugOutput DebugOutput { get; }
-    public EssentialSettings EssentialSettings { get; } = new();
+    public EssentialSettings EssentialSettings { get; set; } = new();
     public Input Input { get; }
     public IDisplay Display { get; }
 
