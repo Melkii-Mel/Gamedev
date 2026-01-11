@@ -51,8 +51,44 @@ public class Implementation : IEngine
 public class Display(Node node) : IDisplay
 {
     public Vector2D<float> ScreenSize => OS.GetScreenSize().ToSilk();
-    public Vector2D<float> WindowSize => OS.WindowSize.ToSilk();
     public Vector2D<float> ViewportSize => node.GetViewport().GetVisibleRect().Size.ToSilk();
+
+    public DisplayMode DisplayMode
+    {
+        get =>
+            OS.WindowFullscreen ? DisplayMode.Fullscreen :
+            OS.WindowBorderless ? DisplayMode.Borderless : DisplayMode.Windowed;
+        set
+        {
+            switch (value)
+            {
+                case DisplayMode.Windowed:
+                    OS.WindowFullscreen = false;
+                    OS.WindowBorderless = false;
+                    break;
+                case DisplayMode.Fullscreen:
+                    OS.WindowFullscreen = true;
+                    OS.WindowBorderless = false;
+                    break;
+                case DisplayMode.Borderless:
+                    OS.WindowFullscreen = false;
+                    OS.WindowBorderless = true;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(value), value, null);
+            }
+        }
+    }
+
+    public Rectangle<float> WindowRect
+    {
+        get => new(OS.WindowPosition.ToSilk(), OS.WindowSize.ToSilk());
+        set
+        {
+            OS.WindowPosition = value.Origin.ToGd();
+            OS.WindowSize = value.Size.ToGd();
+        }
+    }
 }
 
 public class GdResources : IResources

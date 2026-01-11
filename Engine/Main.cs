@@ -99,9 +99,26 @@ public interface IEntities
 
 public interface IDisplay
 {
-    Vector2D<float> ScreenSize { get; }
-    Vector2D<float> WindowSize { get; }
     Vector2D<float> ViewportSize { get; }
+    Rectangle<float> WindowRect { get; set; }
+    Vector2D<float> ScreenSize { get; }
+    DisplayMode DisplayMode { get; set; }
+}
+
+public enum DisplayMode
+{
+    Windowed,
+    Fullscreen,
+    Borderless,
+}
+
+public static class DisplayExtensions
+{
+    public static void WindowedFullscreen(this IDisplay display)
+    {
+        display.DisplayMode = DisplayMode.Borderless;
+        display.WindowRect = new Rectangle<float>(Vector2D<float>.Zero, display.ScreenSize);
+    }
 }
 
 public static class I2DExtensions
