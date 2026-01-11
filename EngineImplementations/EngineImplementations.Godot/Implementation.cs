@@ -26,9 +26,11 @@ public class Implementation : IEngine
         root.AddChild(inputCenter);
         Input = new Input(inputCenter);
         Display = new Display(root);
+        Application = new Application(root);
     }
 
     public IDisplay Display { get; }
+    public IApplication Application { get; }
     public event Action<double>? Update;
     public event Action<double>? PhysicsUpdate;
 
@@ -46,6 +48,14 @@ public class Implementation : IEngine
     public IResources Resources { get; } = new GdResources();
 
     public IInput Input { get; }
+}
+
+public class Application(Node node) : IApplication
+{
+    public void Quit()
+    {
+        node.GetTree().Quit(0);
+    }
 }
 
 public class Display(Node node) : IDisplay

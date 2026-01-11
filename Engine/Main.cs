@@ -47,6 +47,7 @@ public interface IEngine
     IResources Resources { get; }
     IInput Input { get; }
     IDisplay Display { get; }
+    IApplication Application { get; }
 
     /// <summary>
     ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
@@ -112,6 +113,11 @@ public enum DisplayMode
     Borderless,
 }
 
+public interface IApplication
+{
+    void Quit();
+}
+
 public static class DisplayExtensions
 {
     public static void WindowedFullscreen(this IDisplay display)
@@ -142,6 +148,7 @@ public class Engine
         Resources = new Resources.Resources(E.Resources);
         Input = new Input(E.Input);
         Display = E.Display;
+        Application = E.Application;
     }
 
     public IEngine E { get; }
@@ -153,6 +160,7 @@ public class Engine
     public EssentialSettings EssentialSettings { get; set; } = new();
     public Input Input { get; }
     public IDisplay Display { get; }
+    public IApplication Application { get; set; }
 
     public event Action<double>? Update;
     public event Action<double>? PhysicsUpdate;
