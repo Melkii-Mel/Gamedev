@@ -80,6 +80,7 @@ public interface ITextField
     Color Color { get; set; }
     HAlignment HAlignment { get; set; }
     VAlignment VAlignment { get; set; }
+    bool AutoWrap { get; set; }
 }
 
 public enum HAlignment

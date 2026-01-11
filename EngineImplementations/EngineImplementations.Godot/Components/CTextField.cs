@@ -116,4 +116,10 @@ internal class CTextField : ITextField
             _ => throw new NotImplementedException(),
         };
     }
+
+    public bool AutoWrap
+    {
+        get => _textField.Autowrap;
+        set => _textField.Autowrap = value;
+    }
 }
