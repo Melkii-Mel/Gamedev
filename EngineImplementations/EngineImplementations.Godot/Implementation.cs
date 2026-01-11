@@ -104,7 +104,8 @@ public class InputCenter : Node
 
     public override void _Input(InputEvent @event)
     {
-        if (@event is InputEventKey { Echo: false } eKey) KeyboardAction?.Invoke(((KeyList)eKey.Scancode).ToString(), eKey.Pressed);
+        if (@event is InputEventKey { Echo: false } eKey)
+            KeyboardAction?.Invoke(((KeyList)eKey.Scancode).ToString(), eKey.Pressed);
         // TODO: Finish after other input devices' API is complete
     }
 }
