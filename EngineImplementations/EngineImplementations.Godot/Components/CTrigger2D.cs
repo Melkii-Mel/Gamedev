@@ -4,6 +4,7 @@ using Gamedev.Entities;
 using Godot;
 using Primitives;
 using Primitives.Shapes;
+using Silk.NET.Maths;
 
 namespace EngineImplementations.GodotImplementation.Components;
 
@@ -72,9 +73,10 @@ public class CTrigger2D : ITrigger2D
                             Points = [.. polygon.Points.Select(p => p.ToGd())],
                         },
                     },
-                    _ => throw new NotImplementedException(),
+                    _ => throw new NotImplementedException()
                 },
             };
+            _collisionShape.Position = ((Vector2D<float>.One / 2 - _collider.Pivot) * _collider.Shape2D.Size).ToGd();
             _trigger2d.AddChild(_collisionShape);
         }
     }

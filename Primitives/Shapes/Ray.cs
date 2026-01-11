@@ -1,3 +1,8 @@
-﻿namespace Primitives.Shapes;
+﻿using Silk.NET.Maths;
 
-public record Ray(float Length) : IShape2D;
+namespace Primitives.Shapes;
+
+public record Ray(float Length) : IShape2D
+{
+    public Vector2D<float> Size => Vector2D<float>.Zero;
+}

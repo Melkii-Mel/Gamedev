@@ -9,4 +9,6 @@ public record Polygon(Vector2D<float>[] Points) : IShape2D
     {
         throw new NotImplementedException();
     }
+
+    public Vector2D<float> Size => throw new NotImplementedException();
 }

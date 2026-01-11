@@ -1,3 +1,8 @@
-﻿namespace Primitives.Shapes;
+﻿using Silk.NET.Maths;
 
-public record Circle(float Radius) : IShape2D;
+namespace Primitives.Shapes;
+
+public record Circle(float Radius) : IShape2D
+{
+    public Vector2D<float> Size => new(Radius);
+}

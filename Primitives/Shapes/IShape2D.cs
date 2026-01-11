@@ -1,3 +1,8 @@
-﻿namespace Primitives.Shapes;
+﻿using Silk.NET.Maths;
 
-public interface IShape2D;
+namespace Primitives.Shapes;
+
+public interface IShape2D
+{
+    Vector2D<float> Size { get; }
+}
