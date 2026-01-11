@@ -172,6 +172,7 @@ public class Engine
 public class EssentialSettings
 {
     public bool Debug { get; set; } = true;
+    public bool SkipLocalization { get; set; }
 }
 
 public interface IGame

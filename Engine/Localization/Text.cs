@@ -101,11 +101,13 @@ public class Text
 
     public string GetValue()
     {
-        return LocalizationCore.CurrentLocalization().TryGetValue(_key, out var value)
-            ? value
-            : Diagnostics.Debug
-                ? $"ERROR: translation for `{_key}` key not found."
-                : _key;
+        return EngineInstance.E.EssentialSettings.SkipLocalization
+            ? _key
+            : LocalizationCore.CurrentLocalization().TryGetValue(_key, out var value)
+                ? value
+                : Diagnostics.Debug
+                    ? $"ERROR: translation for `{_key}` key not found."
+                    : _key;
     }
 
     public void Bind(Action<string> setter)
