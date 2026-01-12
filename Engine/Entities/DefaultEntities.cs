@@ -7,7 +7,7 @@ using Silk.NET.Maths;
 
 namespace Gamedev.Entities;
 
-public interface IEntity
+public interface IEntity : IEntityHolder
 {
     event Action<IEntity>? ChildAdded;
     event Action<IEntity>? ChildRemoved;
@@ -19,41 +19,25 @@ public interface IEntity
     IEnumerable<IEntity> GetChildren();
 }
 
+public interface IEntityHolder
+{
+    public IEntity Entity { get; }
+}
+
 public static class EntityExtensions
 {
-    public static void AddChild<T>(this IEntity entity, EntityComponent<T> entityComponent)
+    public static void AddChild(this IEntityHolder entity, IEntityHolder child)
     {
-        entity.AddChild(entityComponent.Entity);
+        entity.Entity.AddChild(child.Entity);
     }
 
-    public static void RemoveChild<T>(this IEntity entity, EntityComponent<T> entityComponent)
+    public static void RemoveChild(this IEntityHolder entity, IEntityHolder child)
     {
-        entity.RemoveChild(entityComponent.Entity);
+        entity.Entity.RemoveChild(child.Entity);
     }
 }
 
-public readonly record struct EntityComponent<T>(IEntity Entity, T Component)
-{
-    public void AddChild(IEntity entity)
-    {
-        Entity.AddChild(entity);
-    }
-
-    public void AddChild<TOther>(EntityComponent<TOther> entityComponent)
-    {
-        Entity.AddChild(entityComponent);
-    }
-
-    public void RemoveChild(IEntity entity)
-    {
-        Entity.RemoveChild(entity);
-    }
-
-    public void RemoveChild<TOther>(EntityComponent<TOther> entityComponent)
-    {
-        Entity.RemoveChild(entityComponent);
-    }
-}
+public readonly record struct EntityComponent<T>(IEntity Entity, T Component) : IEntityHolder;
 
 public interface IButton
 {

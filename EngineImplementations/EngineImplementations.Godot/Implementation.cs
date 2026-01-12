@@ -255,4 +255,6 @@ public class Entity(Node node) : IEntity
     {
         return Utils.As<Entity>(entity)._node;
     }
+
+    IEntity IEntityHolder.Entity => this;
 }
