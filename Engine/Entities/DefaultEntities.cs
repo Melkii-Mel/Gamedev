@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Attributes;
 using Gamedev.Localization;
 using Gamedev.Resources;
 using Primitives;
@@ -7,28 +8,63 @@ using Silk.NET.Maths;
 
 namespace Gamedev.Entities;
 
+[DelegateImplementation(typeof(IEntity), nameof(Internal))]
+public partial class Entity : IEntityHolder
+{
+    Entity IEntityHolder.Entity => this;
+    public IEntity Internal { get; }
+
+    public Entity(IEntity entity)
+    {
+        Internal = entity;
+    }
+
+    public event Action<Entity>? ChildAdded;
+    public event Action<Entity>? ChildRemoved;
+}
+
 public interface IEntity
 {
-    event Action<IEntity>? ChildAdded;
-    event Action<IEntity>? ChildRemoved;
     void AddChild(IEntity entity);
     void RemoveChild(IEntity entity);
+    IEntity? Parent { get; }
     void Free();
     void FreeRn();
     IEntity RemoveChildAt(int index);
     IEnumerable<IEntity> GetChildren();
 }
 
+public interface IEntityHolder
+{
+    public Entity Entity { get; }
+}
+
 public static class EntityExtensions
 {
-    public static void AddChild<T>(this IEntity entity, EntityComponent<T> entityComponent)
+    public static void AddChild(this IEntityHolder entity, IEntityHolder child)
     {
-        entity.AddChild(entityComponent.Entity);
+        entity.Entity.AddChild(child.Entity);
     }
 
-    public static void RemoveChild<T>(this IEntity entity, EntityComponent<T> entityComponent)
+    public static void RemoveChild<T>(this IEntityHolder entity, IEntityHolder child)
     {
-        entity.RemoveChild(entityComponent.Entity);
+        entity.Entity.RemoveChild(child.Entity.Internal);
+    }
+
+    public static void Reparent(this IEntityHolder entity, IEntityHolder newParent)
+    {
+        entity.Entity.Parent?.RemoveChild(entity.Entity);
+        newParent.Entity.AddChild(entity.Entity);
+    }
+
+    public static void AddChildAddedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildAdded += callback;
+    }
+
+    public static void RemoveChildAddedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildRemoved += callback;
     }
 }
 
