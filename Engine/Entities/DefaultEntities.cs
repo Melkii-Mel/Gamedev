@@ -8,7 +8,7 @@ using Silk.NET.Maths;
 
 namespace Gamedev.Entities;
 
-[DelegateImplementation(typeof(IEntity), nameof(Internal))]
+[DelegateImplementation(typeof(IEntity), nameof(Internal), DelegationStyle.Implicit, ["Parent"])]
 public partial class Entity : IEntityHolder
 {
     Entity IEntityHolder.Entity => this;
