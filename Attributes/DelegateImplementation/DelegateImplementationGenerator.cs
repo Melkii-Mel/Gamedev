@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
@@ -13,50 +14,121 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
-        context.RegisterSourceOutput(
-            context.CompilationProvider.Combine(context.SyntaxProvider
-                .CreateSyntaxProvider((node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
-                    (syntaxContext, _) => (ClassDeclarationSyntax)syntaxContext.Node).Collect()),
-            (spc, source) => Execute(spc, source.Left, source.Right)
+        var classes = context.SyntaxProvider.CreateSyntaxProvider(
+            static (node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
+            static (ctx, _) => (ClassDeclarationSyntax)ctx.Node
         );
+
+        context.RegisterSourceOutput(
+            classes.Combine(context.CompilationProvider),
+            static (spc, pair) => { Execute(spc, pair.Right, pair.Left); });
     }
 
     private static void Execute(
         SourceProductionContext context,
         Compilation compilation,
-        ImmutableArray<ClassDeclarationSyntax> classes
+        ClassDeclarationSyntax classDeclaration
     )
     {
+        var model = compilation.GetSemanticModel(classDeclaration.SyntaxTree);
+        if (model.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol classSymbol) return;
         var attrSymbol = compilation.GetTypeByMetadataName("Attributes.DelegateImplementationAttribute");
-        if (attrSymbol == null) return;
-        foreach (var classDeclaration in classes)
+        if (attrSymbol is null) return;
+        foreach (var attributeData in classSymbol.GetAttributes()
+                     .Where(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attrSymbol)))
         {
-            var model = compilation.GetSemanticModel(classDeclaration.SyntaxTree);
-            if (model.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol classSymbol) continue;
-            foreach (var attributeData in classSymbol.GetAttributes()
-                         .Where(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attrSymbol)))
+            try
             {
-                var interfaceSymbol = (INamedTypeSymbol)attributeData.ConstructorArguments[0].Value;
-                var targetProperty = (string)attributeData.ConstructorArguments[1].Value;
-                var implicitDelegation = (int)(attributeData.ConstructorArguments[2].Value ?? 0) == 0;
-                GenerateDelegation(context, classSymbol, interfaceSymbol, targetProperty, implicitDelegation);
+                var iterable = CreateArgsEnumerable(attributeData);
+                using var enumerator = iterable.GetEnumerator();
+                enumerator.MoveNext();
+                var interfaceSymbol = GetArg<INamedTypeSymbol>(enumerator, () => throw new Exception());
+                var targetProperty = GetArg<string>(enumerator, () => throw new Exception());
+                var implicitDelegation = (int)(GetArg<object?>(enumerator, () => null) ?? 0) == 0;
+                var ignoredMembers = GetArgs<string>(enumerator, () => "").ToArray();
+                GenerateDelegation(
+                    context,
+                    classSymbol, interfaceSymbol,
+                    targetProperty,
+                    implicitDelegation,
+                    ignoredMembers
+                );
             }
+            catch
+            {
+                // ignored
+            }
+        }
+    }
+
+    private static T GetArg<T>(IEnumerator<object?> enumerator, Func<T> fallback)
+    {
+        var value = enumerator.Current is T t ? t : fallback();
+        enumerator.MoveNext();
+        return value;
+    }
+
+    // TODO: Add recursion support;
+    private static IEnumerable<T> GetArgs<T>(IEnumerator<object?> enumerator, Func<T> itemFallback)
+    {
+        var args = GetArg<ImmutableArray<TypedConstant>>(enumerator, () => []);
+        using var en = CreateConstantsEnumerable(args).GetEnumerator();
+        en.MoveNext();
+        for (var i = 0; i < args.Length; i++)
+        {
+            yield return GetArg(en, itemFallback);
+        }
+    }
+
+    private static IEnumerable<object?> CreateArgsEnumerable(AttributeData attributeData)
+    {
+        var args = attributeData.ConstructorArguments;
+        return CreateConstantsEnumerable(args);
+    }
+
+    private static IEnumerable<object?> CreateConstantsEnumerable(IList<TypedConstant> args)
+    {
+        var len = args.Count;
+        for (var i = 0; i < len; i++)
+        {
+            object? value;
+            try
+            {
+                value = args[i].Value;
+            }
+            catch
+            {
+                try
+                {
+                    value = args[i].Values;
+                }
+                catch
+                {
+                    value = null;
+                }
+            }
+
+            yield return value;
         }
     }
 
     private static void GenerateDelegation(SourceProductionContext context,
         INamedTypeSymbol classSymbol,
         INamedTypeSymbol interfaceSymbol,
-        string targetPropertyName, bool implicitDelegation)
+        string targetPropertyName,
+        bool implicitDelegation,
+        string[] ignoredMembers
+    )
     {
         var ns = classSymbol.ContainingNamespace;
         var className = classSymbol.Name;
         var interfaceName = interfaceSymbol.Name;
         var (methodSymbols, propertySymbols) = ExtractInterfaceSymbols();
 
+        var source = GenSource();
         context.AddSource(
             $"{className}_{interfaceSymbol.Name}_Delegation.g.cs",
-            SourceText.From(GenSource(), Encoding.UTF8)
+            SourceText.From(source, Encoding.UTF8)
         );
 
         return;
@@ -89,7 +161,7 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
 
             return string.Join("\n", namespaces.Select(n => $"using {n.ToDisplayString()};"));
 
-            void CollectNamespaces(ITypeSymbol type, HashSet<INamespaceSymbol> set)
+            void CollectNamespaces(ITypeSymbol? type, HashSet<INamespaceSymbol> set)
             {
                 while (true)
                 {
@@ -153,14 +225,16 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
 
         string GenMemberSignatureName(string type)
         {
-            return implicitDelegation ? $"public {type} " : $"{type} {targetPropertyName}.";
+            return implicitDelegation ? $"public {type} " : $"{type} {interfaceName}.";
         }
 
         (List<IMethodSymbol>, List<IPropertySymbol>) ExtractInterfaceSymbols()
         {
             List<IMethodSymbol> methods = [];
             List<IPropertySymbol> properties = [];
-            foreach (var interfaceMember in interfaceSymbol.GetMembers())
+            foreach (var interfaceMember in interfaceSymbol.GetMembers()
+                         .Where(m => !ignoredMembers.Contains(m.Name))
+                    )
             {
                 switch (interfaceMember)
                 {
