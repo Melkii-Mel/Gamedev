@@ -15,6 +15,7 @@ internal class CImage : IImage
     {
         Control = new CControl(textureRect);
         _textureRect = textureRect;
+        _textureRect.Expand = true;
         Texture = texture;
     }
 
