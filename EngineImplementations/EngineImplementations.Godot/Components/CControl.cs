@@ -1,6 +1,8 @@
-﻿using Gamedev.Entities;
+﻿using EngineImplementations.GodotImplementation.EntitiesImplementations;
+using Gamedev.Entities;
 using Godot;
 using Silk.NET.Maths;
+using Color = Primitives.Color;
 
 namespace EngineImplementations.GodotImplementation.Components;
 
@@ -52,5 +54,11 @@ public readonly struct CControl(Control control) : IControl
     {
         get => control.Visible;
         set => control.Visible = value;
+    }
+
+    public Color Modulation
+    {
+        get => control.Modulate.ToPrimitives(); 
+        set => control.Modulate = value.ToGd();
     }
 }

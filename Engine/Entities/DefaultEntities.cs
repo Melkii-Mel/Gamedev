@@ -23,7 +23,7 @@ public partial class Entity : IEntityHolder
     public event Action<Entity>? ChildRemoved;
 }
 
-public interface IEntity
+public interface IEntity : IEntityHolder
 {
     void AddChild(IEntity entity);
     void RemoveChild(IEntity entity);
@@ -46,9 +46,9 @@ public static class EntityExtensions
         entity.Entity.AddChild(child.Entity);
     }
 
-    public static void RemoveChild<T>(this IEntityHolder entity, IEntityHolder child)
+    public static void RemoveChild(this IEntityHolder entity, IEntityHolder child)
     {
-        entity.Entity.RemoveChild(child.Entity.Internal);
+        entity.Entity.Internal.RemoveChild(child.Entity.Internal);
     }
 
     public static void Reparent(this IEntityHolder entity, IEntityHolder newParent)
@@ -68,28 +68,7 @@ public static class EntityExtensions
     }
 }
 
-public readonly record struct EntityComponent<T>(IEntity Entity, T Component)
-{
-    public void AddChild(IEntity entity)
-    {
-        Entity.AddChild(entity);
-    }
-
-    public void AddChild<TOther>(EntityComponent<TOther> entityComponent)
-    {
-        Entity.AddChild(entityComponent);
-    }
-
-    public void RemoveChild(IEntity entity)
-    {
-        Entity.RemoveChild(entity);
-    }
-
-    public void RemoveChild<TOther>(EntityComponent<TOther> entityComponent)
-    {
-        Entity.RemoveChild(entityComponent);
-    }
-}
+public readonly record struct EntityComponent<T>(IEntity Entity, T Component) : IEntityHolder;
 
 public interface IButton
 {
@@ -148,6 +127,7 @@ public interface IControl
     Vector2D<float> Pivot { get; set; }
     Rectangle<float> Margins { get; set; }
     bool Visible { get; set; }
+    Color Modulation { get; set; }
 
     // TODO: Add a property that maps a set of common events like mouse clicks, movement etc.
 }
