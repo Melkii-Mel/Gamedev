@@ -1,5 +1,5 @@
 ﻿using System;
-using Utils.DataStructures;
+using Utils.Collections;
 
 namespace Utils;
 
