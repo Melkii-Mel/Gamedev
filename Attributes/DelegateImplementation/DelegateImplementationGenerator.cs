@@ -30,6 +30,7 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
         ClassDeclarationSyntax classDeclaration
     )
     {
+        // System.Diagnostics.Debugger.Launch();
         var model = compilation.GetSemanticModel(classDeclaration.SyntaxTree);
         if (model.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol classSymbol) return;
         var attrSymbol = compilation.GetTypeByMetadataName("Attributes.DelegateImplementationAttribute");
@@ -54,9 +55,12 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
                     ignoredMembers
                 );
             }
-            catch
+            catch (Exception ex)
             {
-                // ignored
+                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(id: "DIG001",
+                    title: "Delegate implementation generator failed", messageFormat: "An error occurred: {0}",
+                    category: nameof(DelegateImplementationGenerator), DiagnosticSeverity.Error,
+                    isEnabledByDefault: true), classDeclaration.GetLocation(), ex.Message));
             }
         }
     }
@@ -72,6 +76,10 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
     private static IEnumerable<T> GetArgs<T>(IEnumerator<object?> enumerator, Func<T> itemFallback)
     {
         var args = GetArg<ImmutableArray<TypedConstant>>(enumerator, () => []);
+        if (args.IsDefault)
+        {
+            yield break;
+        }
         using var en = CreateConstantsEnumerable(args).GetEnumerator();
         en.MoveNext();
         for (var i = 0; i < args.Length; i++)
@@ -86,9 +94,9 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
         return CreateConstantsEnumerable(args);
     }
 
-    private static IEnumerable<object?> CreateConstantsEnumerable(IList<TypedConstant> args)
+    private static IEnumerable<object?> CreateConstantsEnumerable(ImmutableArray<TypedConstant> args)
     {
-        var len = args.Count;
+        var len = args.Length;
         for (var i = 0; i < len; i++)
         {
             object? value;
