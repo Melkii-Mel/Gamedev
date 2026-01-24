@@ -1,0 +1,263 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Linq;
+using System.Text;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Text;
+
+namespace DelegateImplementation;
+
+[Generator]
+public sealed class DelegateImplementationGenerator : IIncrementalGenerator
+{
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        var classes = context.SyntaxProvider.CreateSyntaxProvider(
+            static (node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
+            static (ctx, _) => (ClassDeclarationSyntax)ctx.Node
+        );
+
+        context.RegisterSourceOutput(
+            classes.Combine(context.CompilationProvider),
+            static (spc, pair) => { Execute(spc, pair.Right, pair.Left); });
+    }
+
+    private static void Execute(
+        SourceProductionContext context,
+        Compilation compilation,
+        ClassDeclarationSyntax classDeclaration
+    )
+    {
+        // System.Diagnostics.Debugger.Launch();
+        var model = compilation.GetSemanticModel(classDeclaration.SyntaxTree);
+        if (model.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol classSymbol) return;
+        var attrSymbol = compilation.GetTypeByMetadataName("Attributes.DelegateImplementationAttribute");
+        if (attrSymbol is null) return;
+        foreach (var attributeData in classSymbol.GetAttributes()
+                     .Where(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attrSymbol)))
+        {
+            try
+            {
+                var iterable = CreateArgsEnumerable(attributeData);
+                using var enumerator = iterable.GetEnumerator();
+                enumerator.MoveNext();
+                var interfaceSymbol = GetArg<INamedTypeSymbol>(enumerator, () => throw new Exception());
+                var targetProperty = GetArg<string>(enumerator, () => throw new Exception());
+                var implicitDelegation = (int)(GetArg<object?>(enumerator, () => null) ?? 0) == 0;
+                var ignoredMembers = GetArgs<string>(enumerator, () => "").ToArray();
+                GenerateDelegation(
+                    context,
+                    classSymbol, interfaceSymbol,
+                    targetProperty,
+                    implicitDelegation,
+                    ignoredMembers
+                );
+            }
+            catch (Exception ex)
+            {
+                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(id: "DIG001",
+                    title: "Delegate implementation generator failed", messageFormat: "An error occurred: {0}",
+                    category: nameof(DelegateImplementationGenerator), DiagnosticSeverity.Error,
+                    isEnabledByDefault: true), classDeclaration.GetLocation(), ex.Message));
+            }
+        }
+    }
+
+    private static T GetArg<T>(IEnumerator<object?> enumerator, Func<T> fallback)
+    {
+        var value = enumerator.Current is T t ? t : fallback();
+        enumerator.MoveNext();
+        return value;
+    }
+
+    // TODO: Add recursion support;
+    private static IEnumerable<T> GetArgs<T>(IEnumerator<object?> enumerator, Func<T> itemFallback)
+    {
+        var args = GetArg<ImmutableArray<TypedConstant>>(enumerator, () => []);
+        if (args.IsDefault)
+        {
+            yield break;
+        }
+        using var en = CreateConstantsEnumerable(args).GetEnumerator();
+        en.MoveNext();
+        for (var i = 0; i < args.Length; i++)
+        {
+            yield return GetArg(en, itemFallback);
+        }
+    }
+
+    private static IEnumerable<object?> CreateArgsEnumerable(AttributeData attributeData)
+    {
+        var args = attributeData.ConstructorArguments;
+        return CreateConstantsEnumerable(args);
+    }
+
+    private static IEnumerable<object?> CreateConstantsEnumerable(ImmutableArray<TypedConstant> args)
+    {
+        var len = args.Length;
+        for (var i = 0; i < len; i++)
+        {
+            object? value;
+            try
+            {
+                value = args[i].Value;
+            }
+            catch
+            {
+                try
+                {
+                    value = args[i].Values;
+                }
+                catch
+                {
+                    value = null;
+                }
+            }
+
+            yield return value;
+        }
+    }
+
+    private static void GenerateDelegation(SourceProductionContext context,
+        INamedTypeSymbol classSymbol,
+        INamedTypeSymbol interfaceSymbol,
+        string targetPropertyName,
+        bool implicitDelegation,
+        string[] ignoredMembers
+    )
+    {
+        var ns = classSymbol.ContainingNamespace;
+        var className = classSymbol.Name;
+        var interfaceName = interfaceSymbol.Name;
+        var (methodSymbols, propertySymbols) = ExtractInterfaceSymbols();
+
+        var source = GenSource();
+        context.AddSource(
+            $"{className}_{interfaceSymbol.Name}_Delegation.g.cs",
+            SourceText.From(source, Encoding.UTF8)
+        );
+
+        return;
+
+        string GenSource()
+        {
+            return
+                $"// <auto-generated />\n" +
+                $"#nullable enable\n" +
+                $"{GenUsings()}\n\n" +
+                ns.IsGlobalNamespace switch
+                {
+                    true => GenClassDef(),
+                    false => $"namespace {ns.ToDisplayString()}\n{{\n{GenClassDef()}\n}}",
+                };
+        }
+
+        string GenUsings()
+        {
+            var namespaces = new HashSet<INamespaceSymbol>(SymbolEqualityComparer.Default);
+            foreach (var methodSymbol in methodSymbols)
+            {
+                CollectNamespaces(methodSymbol.ReturnType, namespaces);
+            }
+
+            foreach (var propertySymbol in propertySymbols)
+            {
+                CollectNamespaces(propertySymbol.Type, namespaces);
+            }
+
+            return string.Join("\n", namespaces.Select(n => $"using {n.ToDisplayString()};"));
+
+            void CollectNamespaces(ITypeSymbol? type, HashSet<INamespaceSymbol> set)
+            {
+                while (true)
+                {
+                    if (type is null) return;
+                    if (type.SpecialType == SpecialType.System_Void) return;
+                    if (!type.ContainingNamespace.IsGlobalNamespace) set.Add(type.ContainingNamespace);
+                    switch (type)
+                    {
+                        case INamedTypeSymbol named:
+                            foreach (var arg in named.TypeArguments) CollectNamespaces(arg, set);
+                            break;
+                        case IArrayTypeSymbol array:
+                            type = array.ElementType;
+                            continue;
+                        case IPointerTypeSymbol pointer:
+                            type = pointer.PointedAtType;
+                            continue;
+                    }
+
+                    break;
+                }
+            }
+        }
+
+        string GenClassDef()
+        {
+            return $"public partial class {className} : {interfaceName} {{ {GenClassContent()} }}";
+        }
+
+        string GenClassContent()
+        {
+            var sb = new StringBuilder();
+            foreach (var methodSymbol in methodSymbols) sb.AppendLine(GenMethodDelegation(methodSymbol));
+            foreach (var propertySymbol in propertySymbols) sb.AppendLine(GenPropertyDelegation(propertySymbol));
+            return sb.ToString();
+        }
+
+        string GenMethodDelegation(IMethodSymbol method)
+        {
+            var name = method.Name;
+            var returnType = method.ReturnType.ToDisplayString();
+            var parameters = string.Join(", ",
+                method.Parameters.Select(p => $"{p.Type.ToDisplayString()} {p.Name}"));
+            var args = string.Join(", ", method.Parameters.Select(p => p.Name));
+            return $"{GenMemberSignatureName(returnType)}{name}({parameters}) => {targetPropertyName}.{name}({args});";
+        }
+
+        string GenPropertyDelegation(IPropertySymbol property)
+        {
+            var propertyName = property.Name;
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"{GenMemberSignatureName(property.Type.ToDisplayString())}{propertyName} {{ {Body()} }}");
+
+            return sb.ToString();
+
+            string Body() =>
+                (property.SetMethod != null ? $"set => {targetPropertyName}.{propertyName} = value;" : "") +
+                (property.GetMethod != null ? $"get => {targetPropertyName}.{propertyName};" : "");
+        }
+
+        string GenMemberSignatureName(string type)
+        {
+            return implicitDelegation ? $"public {type} " : $"{type} {interfaceName}.";
+        }
+
+        (List<IMethodSymbol>, List<IPropertySymbol>) ExtractInterfaceSymbols()
+        {
+            List<IMethodSymbol> methods = [];
+            List<IPropertySymbol> properties = [];
+            foreach (var interfaceMember in interfaceSymbol.GetMembers()
+                         .Where(m => !ignoredMembers.Contains(m.Name))
+                    )
+            {
+                switch (interfaceMember)
+                {
+                    case IMethodSymbol methodSymbol:
+                        if (methodSymbol.MethodKind != MethodKind.Ordinary) continue;
+                        if (methodSymbol.IsStatic) continue;
+                        methods.Add(methodSymbol);
+                        break;
+                    case IPropertySymbol propertySymbol:
+                        properties.Add(propertySymbol);
+                        break;
+                }
+            }
+
+            return (methods, properties);
+        }
+    }
+}
