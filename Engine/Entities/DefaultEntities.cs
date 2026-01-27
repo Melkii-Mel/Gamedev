@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Gamedev.Localization;
 using Gamedev.Resources;
 using Primitives;
+using Primitives.Shapes;
 using Silk.NET.Maths;
 
 namespace Gamedev.Entities;
@@ -105,6 +106,13 @@ public interface INode2D
 {
     int ZIndex { get; set; }
     ITransform2D Transform { get; }
+    Color Modulation { get; set; }
+}
+
+public interface ICollider2D
+{
+    IShape2D Shape { get; }
+    Vector2D<float> Pivot { get; }
 }
 
 public interface ITransform2D
