@@ -79,7 +79,8 @@ public partial class SceneRoot
     {
         DropScene();
         _sceneStack.Pop();
-        SetScene(_sceneStack.Peek()());
+        if (_sceneStack.Count != 0)
+            SetScene(_sceneStack.Peek()());
     }
 
     public void Popup(Func<IEntity> scene)
