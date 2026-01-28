@@ -1,6 +1,8 @@
-﻿using Gamedev.Entities;
+﻿using EngineImplementations.GodotImplementation.EntitiesImplementations;
+using Gamedev.Entities;
 using Godot;
 using Silk.NET.Maths;
+using Color = Primitives.Color;
 
 namespace EngineImplementations.GodotImplementation.Components;
 
@@ -13,6 +15,11 @@ public readonly struct CNode2D(Node2D node2d) : INode2D
     }
 
     public ITransform2D Transform { get; } = new Transform(node2d);
+    public Color Modulation
+    {
+        get => node2d.Modulate.ToPrimitives();
+        set => node2d.Modulate = value.ToGd();
+    }
 }
 
 public readonly struct Transform(Node2D node2D) : ITransform2D
