@@ -10,6 +10,8 @@
         <PackageReference Include="LibNoise" Version="0.2.0" />
         <PackageReference Include="Microsoft.Bcl.Numerics" Version="10.0.1"/>
         <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="3.1.0"/>
+        <PackageReference Include="NAudio" Version="2.2.1" />
+        <PackageReference Include="NVorbis" Version="0.10.5" />
         <PackageReference Include="Silk.NET.Maths" Version="2.22.0"/>
         <PackageReference Include="System.Text.Json" Version="10.0.1"/>
     </ItemGroup>
