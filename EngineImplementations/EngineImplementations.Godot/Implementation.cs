@@ -212,6 +212,8 @@ public class Entity(Node node) : IEntity
     public event Action<IEntity>? ChildAdded;
     public event Action<IEntity>? ChildRemoved;
 
+    public bool IsValid => Godot.Object.IsInstanceValid(_node);
+
     public void AddChild(IEntity entity)
     {
         _node.AddChild(ToNode(entity));

@@ -12,6 +12,7 @@ public interface IEntity : IEntityHolder
 {
     event Action<IEntity>? ChildAdded;
     event Action<IEntity>? ChildRemoved;
+    bool IsValid { get; }
     void AddChild(IEntity entity);
     void RemoveChild(IEntity entity);
     void Free();
