@@ -8,6 +8,7 @@ using Gamedev.Resources;
 using Primitives;
 using Primitives.Shapes;
 using Silk.NET.Maths;
+using Utils.IO;
 
 namespace Gamedev;
 
@@ -48,6 +49,7 @@ public interface IEngine
     IInput Input { get; }
     IDisplay Display { get; }
     IApplication Application { get; }
+    IMusicPlayer MusicPlayer { get; }
 
     /// <summary>
     ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
@@ -149,6 +151,7 @@ public class Engine
         Input = new Input(E.Input);
         Display = E.Display;
         Application = E.Application;
+        Music = new Music(E.MusicPlayer);
     }
 
     public IEngine E { get; }
@@ -161,6 +164,7 @@ public class Engine
     public Input Input { get; }
     public IDisplay Display { get; }
     public IApplication Application { get; set; }
+    public Music Music { get; set; }
 
     public event Action<double>? Update;
     public event Action<double>? PhysicsUpdate;
@@ -175,6 +179,72 @@ public class Engine
         E.Root.Entity.AddChild(rootControl.Entity);
         return new RootGroup(root2D, rootControl, root3D);
     }
+}
+
+public class Music
+{
+    private readonly IMusicPlayer _musicPlayer;
+
+    public Music(IMusicPlayer musicPlayer)
+    {
+        _musicPlayer = musicPlayer;
+    }
+
+    private bool _repeat;
+
+    public bool Repeat
+    {
+        get => _repeat;
+        set
+        {
+            _repeat = value;
+            if (_repeat) _musicPlayer.Finished += Repeat;
+            else _musicPlayer.Finished -= Repeat;
+            return;
+
+            void Repeat()
+            {
+                _musicPlayer.Play();
+            }
+        }
+    }
+
+    public void Play()
+    {
+        _musicPlayer.Play();
+    }
+
+    public void Pause()
+    {
+        _musicPlayer.Pause();
+    }
+
+    public void Stop()
+    {
+        _musicPlayer.Stop();
+    }
+
+    public void Play(PcmData pcmData)
+    {
+        _musicPlayer.Stream = pcmData;
+        Play();
+    }
+
+    public void Play(string fileName)
+    {
+        Play(AudioConverter.ConvertToPcm(fileName));
+    }
+}
+
+// TODO: Expand API
+public interface IMusicPlayer
+{
+    PcmData? Stream { get; set; }
+    bool IsPlaying { get; }
+    void Play();
+    void Pause();
+    void Stop();
+    event Action Finished;
 }
 
 public class EssentialSettings
