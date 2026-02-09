@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Gamedev.InputSystem.Api;
 using Utils;
-using Utils.DataStructures;
+using Utils.Collections;
 
 namespace Gamedev.InputSystem.ActionSystem;
 
