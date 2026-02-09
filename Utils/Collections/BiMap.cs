@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
-namespace Utils.DataStructures;
+namespace Utils.Collections;
 
 public class BiMap<TKey, TValue>
 {

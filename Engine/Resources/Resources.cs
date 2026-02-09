@@ -2,7 +2,7 @@
 using System.Linq;
 using Silk.NET.Maths;
 using Utils;
-using Utils.DataStructures;
+using Utils.Collections;
 using Utils.IO;
 
 namespace Gamedev.Resources;

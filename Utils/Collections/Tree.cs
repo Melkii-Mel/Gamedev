@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Utils.DataStructures;
+namespace Utils.Collections;
 
 public class Tree<T> : IEnumerable<T>
 {

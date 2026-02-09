@@ -1,29 +1,69 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Attributes;
 using Gamedev.Localization;
 using Gamedev.Resources;
 using Primitives;
 using Primitives.Shapes;
 using Silk.NET.Maths;
+using Utils.Collections;
 
 namespace Gamedev.Entities;
 
+[DelegateImplementation(typeof(IEntity), nameof(Internal))]
+public partial class Entity : IEntity, IEntityHolder
+{
+    Entity IEntityHolder.Entity => this;
+    private readonly IList<Entity> _children;
+    public ReadOnlyCollection<Entity> Children { get; } 
+
+    public Entity? Parent { get; private set; }
+    private IEntity Internal { get; }
+
+    public Entity(IEntity entity, int size = 0)
+    {
+        _children = new SwapAndPopList<Entity>(size);
+        Internal = entity;
+        Children = new ReadOnlyCollection<Entity>(_children);
+    }
+
+    public event Action<Entity>? ChildAdded;
+    public event Action<Entity>? ChildRemoved;
+
+    public void AddChild(Entity entity)
+    {
+        if (entity.Parent != null)
+        {
+            throw new InvalidOperationException("Entity already has a parent");
+        }
+        Internal.AddChild(entity);
+        _children.Add(entity);
+        entity.Parent = this;
+        ChildAdded?.Invoke(entity);
+    }
+
+    public void RemoveChild(Entity entity)
+    {
+        Internal.RemoveChild(entity);
+        _children.Remove(entity);
+        entity.Parent = null;
+        ChildRemoved?.Invoke(entity);
+    }
+}
+
 public interface IEntity : IEntityHolder
 {
-    event Action<IEntity>? ChildAdded;
-    event Action<IEntity>? ChildRemoved;
     bool IsValid { get; }
     void AddChild(IEntity entity);
     void RemoveChild(IEntity entity);
     void Free();
     void FreeRn();
-    IEntity RemoveChildAt(int index);
-    IEnumerable<IEntity> GetChildren();
 }
 
 public interface IEntityHolder
 {
-    public IEntity Entity { get; }
+    public Entity Entity { get; }
 }
 
 public static class EntityExtensions
@@ -37,9 +77,55 @@ public static class EntityExtensions
     {
         entity.Entity.RemoveChild(child.Entity);
     }
+
+    public static ReadOnlyCollection<Entity> GetChildren(this IEntityHolder entity)
+    {
+        return entity.Entity.Children;
+    }
+
+    public static void DetachFromParent(this IEntityHolder entity)
+    {
+        entity.Entity.Parent?.RemoveChild(entity.Entity);
+    }
+
+    public static void SetParent(this IEntityHolder entity, IEntityHolder? newParent)
+    {
+        DetachFromParent(entity);
+        newParent?.Entity.AddChild(entity.Entity);
+    }
+
+    public static bool HasParent(this IEntityHolder entity)
+    {
+        return GetParent(entity) != null;
+    }
+
+    public static IEntityHolder? GetParent(this IEntityHolder entity)
+    {
+        return entity.Entity.Parent; 
+    }
+
+    public static void AddChildAddedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildAdded += callback;
+    }
+
+    public static void RemoveChildAddedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildAdded -= callback;
+    }
+
+    public static void AddChildRemovedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildRemoved += callback;
+    }
+
+    public static void RemoveChildRemovedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildRemoved -= callback;
+    }
 }
 
-public readonly record struct EntityComponent<T>(IEntity Entity, T Component) : IEntityHolder;
+public readonly record struct EntityComponent<T>(Entity Entity, T Component) : IEntityHolder;
 
 public interface IButton
 {

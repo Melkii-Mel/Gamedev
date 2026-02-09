@@ -1,4 +1,4 @@
-﻿using Utils.DataStructures;
+﻿using Utils.Collections;
 using Utils.Observables;
 
 namespace Gamedev.InputSystem.ActionSystem;

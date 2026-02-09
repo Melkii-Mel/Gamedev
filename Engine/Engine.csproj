@@ -9,6 +9,10 @@
 
     <ItemGroup>
         <PackageReference Include="Silk.NET.Maths" Version="2.22.0"/>
+        <ProjectReference Include="..\Attributes\Attributes\Attributes.csproj" />
+        <ProjectReference Include="..\Attributes\DelegateImplementation\DelegateImplementation.csproj" 
+                          OutputItemType="Analyzer" 
+                          ReferenceOutputAssembly="false" />
         <ProjectReference Include="..\Primitives\Primitives.csproj"/>
         <ProjectReference Include="..\Utils\Utils.csproj"/>
     </ItemGroup>
