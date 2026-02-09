@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Text;
+using DelegateImplementation.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
+using Exception = System.Exception;
 
 namespace DelegateImplementation;
 
@@ -14,6 +15,8 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
 {
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
+        // if (!System.Diagnostics.Debugger.IsAttached) System.Diagnostics.Debugger.Launch();
+
         var classes = context.SyntaxProvider.CreateSyntaxProvider(
             static (node, _) => node is ClassDeclarationSyntax { AttributeLists.Count: > 0 },
             static (ctx, _) => (ClassDeclarationSyntax)ctx.Node
@@ -34,15 +37,15 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
         if (model.GetDeclaredSymbol(classDeclaration) is not INamedTypeSymbol classSymbol) return;
         var attrSymbol = compilation.GetTypeByMetadataName("Attributes.DelegateImplementationAttribute");
         if (attrSymbol is null) return;
-        foreach (var attributeData in classSymbol.GetAttributes()
-                     .Where(a => SymbolEqualityComparer.Default.Equals(a.AttributeClass, attrSymbol)))
+        var ignoredIndexers = AttributeProcessor
+            .FindMultiple(compilation, classSymbol, "Attributes.IgnoredIndexerAttribute")
+            .Select(ap => ap.GetArgs<INamedTypeSymbol>().ToArray()).ToArray();
+        foreach (var attributeProcessor in AttributeProcessor.FindMultiple(compilation, classSymbol,
+                     "Attributes.DelegateImplementationAttribute"))
         {
             try
             {
-                var iterable = CreateArgsEnumerable(attributeData);
-                using var enumerator = iterable.GetEnumerator();
-                enumerator.MoveNext();
-                var openInterfaceSymbol = GetArg<INamedTypeSymbol>(enumerator, () => throw new Exception());
+                var openInterfaceSymbol = attributeProcessor.GetArg<INamedTypeSymbol>();
                 INamedTypeSymbol? interfaceSymbol;
                 if (openInterfaceSymbol.Arity == 0)
                 {
@@ -66,80 +69,27 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
                     }
                 }
 
-                var targetProperty = GetArg<string>(enumerator, () => throw new Exception());
-                var implicitDelegation = (int)(GetArg<object?>(enumerator, () => null) ?? 0) == 0;
-                var ignoredMembers = GetArgs<string>(enumerator, () => "").ToArray();
+                // TODO: Improve error handling
+                var targetProperty = attributeProcessor.GetArg<string>();
+                var implicitDelegation = (int)(attributeProcessor.GetArg<object?>(() => null) ?? 0) == 0;
+                var ignoredMembers = attributeProcessor.GetArgs<string>(() => "").ToArray();
                 GenerateDelegation(
                     context,
-                    classSymbol, interfaceSymbol,
+                    classSymbol,
+                    interfaceSymbol,
                     targetProperty,
                     implicitDelegation,
-                    ignoredMembers
+                    ignoredMembers,
+                    ignoredIndexers
                 );
             }
             catch (Exception ex)
             {
-                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(id: "DIG001",
-                    title: "Delegate implementation generator failed", messageFormat: "An error occurred: {0}",
+                context.ReportDiagnostic(Diagnostic.Create(new DiagnosticDescriptor(id: "DIG002",
+                    title: "Delegate implementation generator failed", messageFormat: "An error occurred: {0}. StackTrace: {1}",
                     category: nameof(DelegateImplementationGenerator), DiagnosticSeverity.Error,
-                    isEnabledByDefault: true), classDeclaration.GetLocation(), ex.Message));
+                    isEnabledByDefault: true), classDeclaration.GetLocation(), ex.Message, ex.StackTrace));
             }
-        }
-    }
-
-    private static T GetArg<T>(IEnumerator<object?> enumerator, Func<T> fallback)
-    {
-        var value = enumerator.Current is T t ? t : fallback();
-        enumerator.MoveNext();
-        return value;
-    }
-
-    // TODO: Add recursion support;
-    private static IEnumerable<T> GetArgs<T>(IEnumerator<object?> enumerator, Func<T> itemFallback)
-    {
-        var args = GetArg<ImmutableArray<TypedConstant>>(enumerator, () => []);
-        if (args.IsDefault)
-        {
-            yield break;
-        }
-
-        using var en = CreateConstantsEnumerable(args).GetEnumerator();
-        en.MoveNext();
-        for (var i = 0; i < args.Length; i++)
-        {
-            yield return GetArg(en, itemFallback);
-        }
-    }
-
-    private static IEnumerable<object?> CreateArgsEnumerable(AttributeData attributeData)
-    {
-        var args = attributeData.ConstructorArguments;
-        return CreateConstantsEnumerable(args);
-    }
-
-    private static IEnumerable<object?> CreateConstantsEnumerable(ImmutableArray<TypedConstant> args)
-    {
-        var len = args.Length;
-        for (var i = 0; i < len; i++)
-        {
-            object? value;
-            try
-            {
-                value = args[i].Value;
-            }
-            catch
-            {
-                try
-                {
-                    value = args[i].Values;
-                }
-                catch
-                {
-                    value = null;
-                }
-            }
-
-            yield return value;
         }
     }
 
@@ -148,8 +98,8 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
         INamedTypeSymbol interfaceSymbol,
         string targetPropertyName,
         bool implicitDelegation,
-        string[] ignoredMembers
-    )
+        string[] ignoredMembers,
+        INamedTypeSymbol[][] ignoredIndexers)
     {
         var ns = classSymbol.ContainingNamespace;
         var className = classSymbol.Name;
@@ -288,7 +238,12 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
 
             foreach (var iface in interfaces)
             {
-                foreach (var member in iface.GetMembers().Where(m => !ignoredMembers.Contains(m.Name)))
+                foreach (var member in iface.GetMembers().Where(m =>
+                             !ignoredMembers.Contains(m.Name) && !(m is IPropertySymbol { IsIndexer: true } ps &&
+                                                                   ignoredIndexers.Any(ii =>
+                                                                       ii.SequenceEqual(
+                                                                           ps.Parameters.Select(p => p.Type),
+                                                                           SymbolEqualityComparer.Default)))))
                 {
                     switch (member)
                     {
