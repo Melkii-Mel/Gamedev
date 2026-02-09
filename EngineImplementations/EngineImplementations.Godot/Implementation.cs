@@ -10,6 +10,7 @@ using Gamedev.InputSystem.Api.Devices;
 using Gamedev.Resources;
 using Godot;
 using Silk.NET.Maths;
+using Utils.IO;
 using TextureLoader = EngineImplementations.GodotImplementation.Resources.TextureLoader;
 
 namespace EngineImplementations.GodotImplementation;
@@ -27,10 +28,12 @@ public class Implementation : IEngine
         Input = new Input(inputCenter);
         Display = new Display(root);
         Application = new Application(root);
+        MusicPlayer = new MusicPlayer(root);
     }
 
     public IDisplay Display { get; }
     public IApplication Application { get; }
+    public IMusicPlayer MusicPlayer { get; }
     public event Action<double>? Update;
     public event Action<double>? PhysicsUpdate;
 
@@ -50,6 +53,75 @@ public class Implementation : IEngine
     public IInput Input { get; }
 }
 
+public class MusicPlayer : IMusicPlayer
+{
+    private readonly AudioStreamPlayer _player;
+    private PcmData? _stream;
+
+    public MusicPlayer(Node root)
+    {
+        _player = new AudioStreamPlayer();
+        root.AddChild(_player);
+    }
+
+    public void Play(PcmData pcmData)
+    {
+        _player.Play();
+    }
+
+    public PcmData? Stream
+    {
+        get => _stream;
+        set
+        {
+            _stream = value;
+            if (_stream == null)
+            {
+                _player.Stream = null;
+                return;
+            }
+            var stream = new AudioStreamSample();
+            stream.Format = _stream.BitDepth switch
+            {
+                16 => AudioStreamSample.FormatEnum.Format16Bits,
+                8 => AudioStreamSample.FormatEnum.Format8Bits,
+                _ => AudioStreamSample.FormatEnum.Format16Bits,
+                // _ => throw new NotSupportedException($"Godot implementation does not support {pcmData.BitDepth}Bits PCM"),
+            };
+            stream.Stereo = _stream.Channels switch
+            {
+                1 => false,
+                2 => true,
+                _ => throw new NotSupportedException(
+                    $"Godot implementation does not support {_stream.Channels} Channels PCM"),
+            };
+            stream.MixRate = _stream.SampleRate;
+            stream.Data = _stream.Data;
+            _player.Stream = stream;
+        }
+    }
+
+    public bool IsPlaying => _player.Playing;
+
+    public void Play()
+    {
+        _player.StreamPaused = false;
+        _player.Play();
+    }
+
+    public void Pause()
+    {
+        _player.StreamPaused = true;
+    }
+
+    public void Stop()
+    {
+        _player.Stop();
+    }
+
+    public event Action? Finished;
+}
+
 public class Application(Node node) : IApplication
 {
     public void Quit()
@@ -60,8 +132,11 @@ public class Application(Node node) : IApplication
 
 public class Display(Node node) : IDisplay
 {
+    private DisplayMode? _displayMode;
+    private Rectangle<float>? _windowRect;
+
     public Vector2D<float> ScreenSize => OS.GetScreenSize().ToSilk();
-    public Vector2D<float> ViewportSize => node.GetViewport().GetVisibleRect().Size.ToSilk();
+    public Vector2D<float> ViewportSize => _displayMode == DisplayMode.Fullscreen ? ScreenSize : WindowRect.Size;
 
     public DisplayMode DisplayMode
     {
@@ -70,6 +145,7 @@ public class Display(Node node) : IDisplay
             OS.WindowBorderless ? DisplayMode.Borderless : DisplayMode.Windowed;
         set
         {
+            _displayMode = value;
             switch (value)
             {
                 case DisplayMode.Windowed:
@@ -92,9 +168,12 @@ public class Display(Node node) : IDisplay
 
     public Rectangle<float> WindowRect
     {
-        get => new(OS.WindowPosition.ToSilk(), OS.WindowSize.ToSilk());
+        get => _displayMode == DisplayMode.Fullscreen
+            ? new Rectangle<float>(Vector2D<float>.Zero, ScreenSize)
+            : _windowRect ?? new Rectangle<float>(OS.WindowPosition.ToSilk(), OS.WindowSize.ToSilk());
         set
         {
+            _windowRect = value;
             OS.WindowPosition = value.Origin.ToGd();
             OS.WindowSize = value.Size.ToGd();
         }
@@ -211,6 +290,8 @@ public class Entity(Node node) : IEntity
     private readonly Node _node = node;
     public event Action<IEntity>? ChildAdded;
     public event Action<IEntity>? ChildRemoved;
+
+    public bool IsValid => Godot.Object.IsInstanceValid(_node);
 
     public void AddChild(IEntity entity)
     {

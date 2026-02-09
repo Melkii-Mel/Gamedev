@@ -3,8 +3,17 @@ using Utils.Observables;
 
 namespace Utils.Engine.MovementControls;
 
-public readonly record struct TopDownState(
-    Vector2D<float> Position = default,
-    Vector2D<float> Velocity = default,
-    Vector2D<float> CurrentDirection = default
-);
+public record struct TopDownState
+{
+    public Vector2D<float> Position, Velocity;
+
+    public TopDownState()
+    {
+    }
+
+    public TopDownState(Vector2D<float> position = default, Vector2D<float> velocity = default)
+    {
+        Position = position;
+        Velocity = velocity;
+    }
+};

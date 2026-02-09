@@ -1,5 +1,4 @@
 ﻿using System;
-using Gamedev.InputSystem.ActionSystem;
 using Silk.NET.Maths;
 using static Gamedev.EngineInstance;
 using static Primitives.Defaults;
@@ -15,7 +14,6 @@ public class TopDownSystem(
     bool forceMaxAnalogVelocity = false
 )
 {
-    private Vector2D<float> _currentDiscreteDirection = Vector2D<float>.Zero;
     private TopDownState _state = state;
 
     public void Init()
@@ -23,8 +21,6 @@ public class TopDownSystem(
         if (directionActionNames == null && analogDirectionName == null)
             E.DebugOutput.Warning(
                 "Top-down movement controls initialized with neither discrete or analog input actions.");
-        if (directionActionNames != null) AddDiscreteInputListener(directionActionNames);
-        if (analogDirectionName != null) AddAnalogInputListener(analogDirectionName);
         updateBinder(Update);
     }
 
@@ -44,7 +40,7 @@ public class TopDownSystem(
 
     private void Update(float delta)
     {
-        var direction = State.CurrentDirection;
+        var direction = CurrentDirection();
 
         if (direction.LengthSquared > 1 || (forceMaxAnalogVelocity && direction.LengthSquared < Tolerance))
             direction = Vector2D.Normalize(direction);
@@ -64,42 +60,30 @@ public class TopDownSystem(
 
         var velocity = State.Velocity + velocityDelta;
         var position = State.Position + velocity * delta;
-        State = State with { Velocity = velocity, Position = position };
+        State = new TopDownState(position, velocity);
     }
 
-
-    private Action<InputActionEventArgs<bool>>? _discreteInputAction;
-
-    private void AddDiscreteInputListener(TopDownDiscreteDirectionActionNames actionNames)
+    private Vector2D<float> CurrentDirection()
     {
-        _discreteInputAction = args =>
+        var direction = Vector2D<float>.Zero;
+        if (directionActionNames != null)
         {
-            var actionName = args.Name;
-            Vector2D<float>? direction = actionName switch
-            {
-                _ when actionName == actionNames.Up => -Vector2D<float>.UnitY,
-                _ when actionName == actionNames.Down => Vector2D<float>.UnitY,
-                _ when actionName == actionNames.Left => -Vector2D<float>.UnitX,
-                _ when actionName == actionNames.Right => Vector2D<float>.UnitX,
-                _ => null,
-            };
-            if (direction == null) return;
-            _currentDiscreteDirection += args.Value ? direction.Value : -direction.Value;
-            _state = State with { CurrentDirection = _currentDiscreteDirection };
-        };
-        E.Input.Dispatcher.AddListener(_discreteInputAction);
-    }
+            if (IsDown(directionActionNames.Down)) direction += Vector2D<float>.UnitY;
+            if (IsDown(directionActionNames.Left)) direction -= Vector2D<float>.UnitX;
+            if (IsDown(directionActionNames.Up)) direction -= Vector2D<float>.UnitY;
+            if (IsDown(directionActionNames.Right)) direction += Vector2D<float>.UnitX;
+        }
 
-    private Action<InputActionEventArgs<Vector2D<float>>>? _analogInputAction;
-
-    private void AddAnalogInputListener(string analogActionName)
-    {
-        _analogInputAction = args =>
+        if (analogDirectionName != null)
         {
-            var actionName = args.Name;
-            if (actionName != analogActionName) return;
-            _state = State with { CurrentDirection = args.Value };
-        };
-        E.Input.Dispatcher.AddListener(_analogInputAction);
+            direction += E.Input.GetActionValue<Vector2D<float>>(analogDirectionName);
+        }
+        
+        return direction;
+
+        bool IsDown(string directionActionName)
+        {
+            return E.Input.GetActionValue<bool>(directionActionName);
+        }
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using Gamedev.InputSystem.ActionSystem;
 using Gamedev.InputSystem.Api;
+using Silk.NET.Maths;
 
 namespace Gamedev.InputSystem;
 
@@ -13,5 +14,10 @@ public class Input(IInput devices)
     public void RegisterActions(IEnumerable<InputAction> inputActions)
     {
         Dispatcher.RegisterActions(inputActions);
+    }
+
+    public T GetActionValue<T>(string actionName)
+    {
+        return Dispatcher.GetActionValue<T>(actionName);
     }
 }

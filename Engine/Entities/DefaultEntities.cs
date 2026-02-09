@@ -5,6 +5,7 @@ using Attributes;
 using Gamedev.Localization;
 using Gamedev.Resources;
 using Primitives;
+using Primitives.Shapes;
 using Silk.NET.Maths;
 using Utils.Collections;
 
@@ -53,6 +54,7 @@ public partial class Entity : IEntity, IEntityHolder
 
 public interface IEntity : IEntityHolder
 {
+    bool IsValid { get; }
     void AddChild(IEntity entity);
     void RemoveChild(IEntity entity);
     void Free();
@@ -191,6 +193,13 @@ public interface INode2D
 {
     int ZIndex { get; set; }
     ITransform2D Transform { get; }
+    Color Modulation { get; set; }
+}
+
+public interface ICollider2D
+{
+    IShape2D Shape { get; }
+    Vector2D<float> Pivot { get; }
 }
 
 public interface ITransform2D
