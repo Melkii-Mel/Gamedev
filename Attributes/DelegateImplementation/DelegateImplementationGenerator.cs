@@ -103,7 +103,7 @@ public sealed class DelegateImplementationGenerator : IIncrementalGenerator
     {
         var ns = classSymbol.ContainingNamespace;
         var className = classSymbol.Name;
-        var interfaceName = interfaceSymbol.Name;
+        var interfaceName = interfaceSymbol.ToDisplayString();
         var interfaceMembers = ExtractInterfaceMembers();
         var methods = interfaceMembers.Methods;
         var properties = interfaceMembers.Properties;
