@@ -12,11 +12,11 @@ using Utils.Collections;
 namespace Gamedev.Entities;
 
 [DelegateImplementation(typeof(IEntity), nameof(Internal))]
-public partial class Entity : IEntity, IEntityHolder
+public partial class Entity : IEntityHolder
 {
     Entity IEntityHolder.Entity => this;
     private readonly IList<Entity> _children;
-    public ReadOnlyCollection<Entity> Children { get; } 
+    public ReadOnlyCollection<Entity> Children { get; }
 
     public Entity? Parent { get; private set; }
     private IEntity Internal { get; }
@@ -37,6 +37,7 @@ public partial class Entity : IEntity, IEntityHolder
         {
             throw new InvalidOperationException("Entity already has a parent");
         }
+
         Internal.AddChild(entity);
         _children.Add(entity);
         entity.Parent = this;
@@ -52,7 +53,7 @@ public partial class Entity : IEntity, IEntityHolder
     }
 }
 
-public interface IEntity : IEntityHolder
+public interface IEntity
 {
     bool IsValid { get; }
     void AddChild(IEntity entity);
@@ -101,7 +102,7 @@ public static class EntityExtensions
 
     public static IEntityHolder? GetParent(this IEntityHolder entity)
     {
-        return entity.Entity.Parent; 
+        return entity.Entity.Parent;
     }
 
     public static void AddChildAddedListener(this IEntityHolder entity, Action<Entity> callback)
@@ -125,27 +126,39 @@ public static class EntityExtensions
     }
 }
 
-public readonly record struct EntityComponent<T>(Entity Entity, T Component) : IEntityHolder;
-
-public interface IButton
+public readonly record struct EntityComponent<T>(Entity Entity, T Component) : IEntityHolder
 {
-    IControl Control { get; }
+    public EntityComponent(IEntity entity, T component) : this(new Entity(entity), component)
+    {
+    }
+
+    public EntityComponent<T> Configure(params Action<T>[] conf)
+    {
+        foreach (var action in conf)
+        {
+            action(Component);
+        }
+
+        return this;
+    }
+}
+
+public interface IButton : IControl
+{
     Text? Text { get; set; }
     event Action? OnClick;
 }
 
-public interface IPanel
+public interface IPanel : IControl
 {
-    IControl Control { get; }
     Color BackgroundColor { get; set; }
     Color BorderColor { get; set; }
     float BorderThickness { get; set; }
     float CornerRadius { get; set; }
 }
 
-public interface ITextField
+public interface ITextField : IControl
 {
-    IControl Control { get; }
     Text? Text { get; set; }
     float FontSize { get; set; }
     string FontFamily { get; set; }
@@ -171,13 +184,12 @@ public enum VAlignment
     Stretch,
 }
 
-public interface IImage
+public interface IImage : IControl
 {
-    IControl Control { get; }
     ITexture? Texture { get; set; }
 }
 
-public interface IControl
+public interface IControl : INode
 {
     Rectangle<float> Bounds { get; set; }
     Rectangle<float> Anchors { get; set; }
@@ -189,11 +201,10 @@ public interface IControl
     // TODO: Add a property that maps a set of common events like mouse clicks, movement etc.
 }
 
-public interface INode2D
+public interface INode2D : INode
 {
     int ZIndex { get; set; }
     ITransform2D Transform { get; }
-    Color Modulation { get; set; }
 }
 
 public interface ICollider2D
@@ -224,14 +235,13 @@ public interface ISprite2D
     ITexture? Texture { get; set; }
 }
 
-public interface ITrigger2D : ITrigger<INode2D, ITrigger2D>
+public interface ITrigger2D : ITrigger<ITrigger2D>, INode2D
 {
     Collider2D? Collider { get; set; }
 }
 
-public interface ITrigger<out TNode, out TParent>
+public interface ITrigger<out TParent>
 {
-    TNode Node { get; }
     Flags Mask { get; set; }
     Flags Layer { get; set; }
 
@@ -240,6 +250,10 @@ public interface ITrigger<out TNode, out TParent>
     event Action<TParent>? OnExit;
 }
 
-public interface INode3D;
+public interface INode3D : INode;
 
-public interface INode;
+public interface INode : IEntity
+{
+    bool Visible { get; set; }
+    Color Modulation { get; set; }
+}

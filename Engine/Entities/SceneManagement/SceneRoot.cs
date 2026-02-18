@@ -104,6 +104,12 @@ public partial class SceneRoot
         _lastScene = null;
         Entity.RemoveChild(Entity.Children[0]);
     }
+
+    public void ChangeScene(Func<IEntity> scene)
+    {
+        if (_sceneStack.Count > 0) PopScene();
+        PushScene(scene);
+    }
 }
 
 public class SceneRoot<T> : SceneRoot
