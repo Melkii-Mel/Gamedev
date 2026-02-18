@@ -1,4 +1,4 @@
-using EngineImplementations.GodotImplementation.Components;
+using EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 using Gamedev.Resources;
 using Godot;
 using Silk.NET.Maths;

@@ -1,14 +1,16 @@
 ﻿using System;
+using Attributes;
 using Gamedev.Entities;
 using Gamedev.Localization;
 using Godot;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
-public class CButton(Button button) : IButton
+[DelegateImplementation(typeof(IControl), nameof(Control))]
+public partial class CButton(Button button) : IButton
 {
     private Text? _text;
-    public IControl Control => new CControl(button);
+    public IControl Control = new CControl(button);
 
     public Text? Text
     {

@@ -1,29 +1,70 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using Attributes;
 using Gamedev.Localization;
 using Gamedev.Resources;
 using Primitives;
 using Primitives.Shapes;
 using Silk.NET.Maths;
+using Utils.Collections;
 
 namespace Gamedev.Entities;
 
-public interface IEntity : IEntityHolder
+[DelegateImplementation(typeof(IEntity), nameof(Internal))]
+public partial class Entity : IEntityHolder
 {
-    event Action<IEntity>? ChildAdded;
-    event Action<IEntity>? ChildRemoved;
+    Entity IEntityHolder.Entity => this;
+    private readonly IList<Entity> _children;
+    public ReadOnlyCollection<Entity> Children { get; }
+
+    public Entity? Parent { get; private set; }
+    private IEntity Internal { get; }
+
+    public Entity(IEntity entity, int size = 0)
+    {
+        _children = new SwapAndPopList<Entity>(size);
+        Internal = entity;
+        Children = new ReadOnlyCollection<Entity>(_children);
+    }
+
+    public event Action<Entity>? ChildAdded;
+    public event Action<Entity>? ChildRemoved;
+
+    public void AddChild(Entity entity)
+    {
+        if (entity.Parent != null)
+        {
+            throw new InvalidOperationException("Entity already has a parent");
+        }
+
+        Internal.AddChild(entity);
+        _children.Add(entity);
+        entity.Parent = this;
+        ChildAdded?.Invoke(entity);
+    }
+
+    public void RemoveChild(Entity entity)
+    {
+        Internal.RemoveChild(entity);
+        _children.Remove(entity);
+        entity.Parent = null;
+        ChildRemoved?.Invoke(entity);
+    }
+}
+
+public interface IEntity
+{
     bool IsValid { get; }
     void AddChild(IEntity entity);
     void RemoveChild(IEntity entity);
     void Free();
     void FreeRn();
-    IEntity RemoveChildAt(int index);
-    IEnumerable<IEntity> GetChildren();
 }
 
 public interface IEntityHolder
 {
-    public IEntity Entity { get; }
+    public Entity Entity { get; }
 }
 
 public static class EntityExtensions
@@ -37,29 +78,87 @@ public static class EntityExtensions
     {
         entity.Entity.RemoveChild(child.Entity);
     }
+
+    public static ReadOnlyCollection<Entity> GetChildren(this IEntityHolder entity)
+    {
+        return entity.Entity.Children;
+    }
+
+    public static void DetachFromParent(this IEntityHolder entity)
+    {
+        entity.Entity.Parent?.RemoveChild(entity.Entity);
+    }
+
+    public static void SetParent(this IEntityHolder entity, IEntityHolder? newParent)
+    {
+        DetachFromParent(entity);
+        newParent?.Entity.AddChild(entity.Entity);
+    }
+
+    public static bool HasParent(this IEntityHolder entity)
+    {
+        return GetParent(entity) != null;
+    }
+
+    public static IEntityHolder? GetParent(this IEntityHolder entity)
+    {
+        return entity.Entity.Parent;
+    }
+
+    public static void AddChildAddedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildAdded += callback;
+    }
+
+    public static void RemoveChildAddedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildAdded -= callback;
+    }
+
+    public static void AddChildRemovedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildRemoved += callback;
+    }
+
+    public static void RemoveChildRemovedListener(this IEntityHolder entity, Action<Entity> callback)
+    {
+        entity.Entity.ChildRemoved -= callback;
+    }
 }
 
-public readonly record struct EntityComponent<T>(IEntity Entity, T Component) : IEntityHolder;
-
-public interface IButton
+public readonly record struct EntityComponent<T>(Entity Entity, T Component) : IEntityHolder
 {
-    IControl Control { get; }
+    public EntityComponent(IEntity entity, T component) : this(new Entity(entity), component)
+    {
+    }
+
+    public EntityComponent<T> Configure(params Action<T>[] conf)
+    {
+        foreach (var action in conf)
+        {
+            action(Component);
+        }
+
+        return this;
+    }
+}
+
+public interface IButton : IControl
+{
     Text? Text { get; set; }
     event Action? OnClick;
 }
 
-public interface IPanel
+public interface IPanel : IControl
 {
-    IControl Control { get; }
     Color BackgroundColor { get; set; }
     Color BorderColor { get; set; }
     float BorderThickness { get; set; }
     float CornerRadius { get; set; }
 }
 
-public interface ITextField
+public interface ITextField : IControl
 {
-    IControl Control { get; }
     Text? Text { get; set; }
     float FontSize { get; set; }
     string FontFamily { get; set; }
@@ -85,13 +184,12 @@ public enum VAlignment
     Stretch,
 }
 
-public interface IImage
+public interface IImage : IControl
 {
-    IControl Control { get; }
     ITexture? Texture { get; set; }
 }
 
-public interface IControl
+public interface IControl : INode
 {
     Rectangle<float> Bounds { get; set; }
     Rectangle<float> Anchors { get; set; }
@@ -103,11 +201,10 @@ public interface IControl
     // TODO: Add a property that maps a set of common events like mouse clicks, movement etc.
 }
 
-public interface INode2D
+public interface INode2D : INode
 {
     int ZIndex { get; set; }
     ITransform2D Transform { get; }
-    Color Modulation { get; set; }
 }
 
 public interface ICollider2D
@@ -138,14 +235,13 @@ public interface ISprite2D
     ITexture? Texture { get; set; }
 }
 
-public interface ITrigger2D : ITrigger<INode2D, ITrigger2D>
+public interface ITrigger2D : ITrigger<ITrigger2D>, INode2D
 {
     Collider2D? Collider { get; set; }
 }
 
-public interface ITrigger<out TNode, out TParent>
+public interface ITrigger<out TParent>
 {
-    TNode Node { get; }
     Flags Mask { get; set; }
     Flags Layer { get; set; }
 
@@ -154,6 +250,10 @@ public interface ITrigger<out TNode, out TParent>
     event Action<TParent>? OnExit;
 }
 
-public interface INode3D;
+public interface INode3D : INode;
 
-public interface INode;
+public interface INode : IEntity
+{
+    bool Visible { get; set; }
+    Color Modulation { get; set; }
+}

@@ -1,13 +1,15 @@
-﻿using EngineImplementations.GodotImplementation.EntitiesImplementations;
+﻿using Attributes;
 using Gamedev.Entities;
 using Godot;
 using Silk.NET.Maths;
-using Color = Primitives.Color;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
-public readonly struct CNode2D(Node2D node2d) : INode2D
+[DelegateImplementation(typeof(INode), nameof(_node))]
+public partial class CNode2D(Node2D node2d) : INode2D
 {
+    private CNode _node = new(node2d);
+    
     public int ZIndex
     {
         get => node2d.ZIndex;
@@ -15,11 +17,6 @@ public readonly struct CNode2D(Node2D node2d) : INode2D
     }
 
     public ITransform2D Transform { get; } = new Transform(node2d);
-    public Color Modulation
-    {
-        get => node2d.Modulate.ToPrimitives();
-        set => node2d.Modulate = value.ToGd();
-    }
 }
 
 public readonly struct Transform(Node2D node2D) : ITransform2D

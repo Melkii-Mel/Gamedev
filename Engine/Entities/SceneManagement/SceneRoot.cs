@@ -22,7 +22,7 @@ public partial class SceneRoot
     /// </param>
     /// <exception cref="ArgumentException">`entity` is not empty when creating a new SceneRoot.</exception>
     /// <exception cref="NotSupportedException">Thrown when trying to add or remove entities from a SceneRoot.</exception>
-    public SceneRoot(IEntity entity)
+    public SceneRoot(Entity entity)
     {
         Entity = entity;
         if (entity.GetChildren().Count() != 0)
@@ -43,7 +43,7 @@ public partial class SceneRoot
         };
     }
 
-    public IEntity Entity { get; }
+    public Entity Entity { get; }
 
     /// <summary>
     ///     Pushes a new scene to the stack and sets it as the current scene.
@@ -102,7 +102,13 @@ public partial class SceneRoot
     private void DropScene()
     {
         _lastScene = null;
-        Entity.RemoveChildAt(0);
+        Entity.RemoveChild(Entity.Children[0]);
+    }
+
+    public void ChangeScene(Func<IEntity> scene)
+    {
+        if (_sceneStack.Count > 0) PopScene();
+        PushScene(scene);
     }
 }
 

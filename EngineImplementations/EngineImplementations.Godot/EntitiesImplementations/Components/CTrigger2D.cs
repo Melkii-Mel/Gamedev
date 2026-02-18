@@ -1,23 +1,27 @@
 using System;
 using System.Linq;
+using Attributes;
 using Gamedev.Entities;
 using Godot;
 using Primitives;
 using Primitives.Shapes;
 using Silk.NET.Maths;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
-public class CTrigger2D : ITrigger2D
+[DelegateImplementation(typeof(INode2D), nameof(_node))]
+public partial class CTrigger2D : ITrigger2D
 {
     private readonly Trigger2D _trigger2d;
     private Collider2D? _collider;
     private CollisionShape2D? _collisionShape;
     private Flags _layer;
     private Flags _mask;
+    private INode2D _node;
 
     public CTrigger2D(Trigger2D trigger2D)
     {
+        _node = new CNode2D(trigger2D);
         _trigger2d = trigger2D;
         trigger2D.OnEnter += area => OnEnter?.Invoke(area);
         trigger2D.OnStay += (area, delta) => OnStay?.Invoke(area, delta);

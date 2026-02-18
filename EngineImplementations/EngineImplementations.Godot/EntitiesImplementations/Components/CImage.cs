@@ -1,11 +1,13 @@
+using Attributes;
 using EngineImplementations.GodotImplementation.Resources;
 using Gamedev.Entities;
 using Gamedev.Resources;
 using Godot;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
-internal class CImage : IImage
+[DelegateImplementation(typeof(IControl), nameof(Control))]
+public partial class CImage : IImage
 {
     private readonly TextureRect _textureRect;
 

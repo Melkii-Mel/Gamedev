@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using Utils.Observables;
 
-namespace Utils.DataStructures;
+namespace Utils.Collections;
 
 public class MultiIndexStore<TPKey, TValue> where TValue : IHasId<TPKey>
 {
