@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Utils.Collections.AdaptiveCollectionInternals;
@@ -32,6 +33,8 @@ public partial class SwapAndPopDictList<T> : IList<T>
 
     public void Add(T item)
     {
+        if (_dictionary.ContainsKey(item))
+            throw new ArgumentException("An item with the same key already exists.", nameof(item));
         _list.Add(item);
         _dictionary[item] = _list.Count - 1;
     }
