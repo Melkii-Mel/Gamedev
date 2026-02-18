@@ -1,11 +1,12 @@
-using EngineImplementations.GodotImplementation.EntitiesImplementations;
+using Attributes;
 using Gamedev.Entities;
 using Godot;
 using Color = Primitives.Color;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
-internal class CPanel : IPanel
+[DelegateImplementation(typeof(IControl), nameof(Control))]
+public partial class CPanel : IPanel
 {
     private readonly StyleBoxFlat _styleBox;
 

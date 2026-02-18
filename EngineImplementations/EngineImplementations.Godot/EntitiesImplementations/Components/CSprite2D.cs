@@ -3,9 +3,8 @@ using Gamedev.Entities;
 using Gamedev.Resources;
 using Godot;
 using Silk.NET.Maths;
-using Engine = Gamedev.Engine;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
 internal struct CSprite2D : ISprite2D
 {

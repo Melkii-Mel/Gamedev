@@ -1,13 +1,16 @@
-﻿using EngineImplementations.GodotImplementation.EntitiesImplementations;
+﻿using Attributes;
 using Gamedev.Entities;
 using Godot;
 using Silk.NET.Maths;
 using Color = Primitives.Color;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
-public readonly struct CControl(Control control) : IControl
+[DelegateImplementation(typeof(INode), nameof(Node))]
+public partial class CControl(Control control) : IControl
 {
+    public CNode Node = new(control);
+    
     public Rectangle<float> Bounds
     {
         get => Utils.FromRect2(control.GetRect());
@@ -48,17 +51,5 @@ public readonly struct CControl(Control control) : IControl
             control.MarginTop = value.Origin.Y;
             control.MarginBottom = value.Origin.Y + value.Size.Y;
         }
-    }
-
-    public bool Visible
-    {
-        get => control.Visible;
-        set => control.Visible = value;
-    }
-
-    public Color Modulation
-    {
-        get => control.Modulate.ToPrimitives(); 
-        set => control.Modulate = value.ToGd();
     }
 }

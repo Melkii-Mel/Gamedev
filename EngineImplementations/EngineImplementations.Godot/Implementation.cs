@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using EngineImplementations.GodotImplementation.Components;
 using EngineImplementations.GodotImplementation.EntitiesImplementations;
+using EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 using Gamedev;
 using Gamedev.Debugging;
 using Gamedev.Entities;
@@ -17,11 +17,11 @@ namespace EngineImplementations.GodotImplementation;
 
 public class Implementation : IEngine
 {
-    public Implementation(ref Action<double>? update, ref Action<double>? physicsUpdate, Node root)
+    public Implementation(ref Action<float>? update, ref Action<float>? physicsUpdate, Node root)
     {
         update += delta => Update?.Invoke(delta);
         PhysicsUpdate += delta => PhysicsUpdate?.Invoke(delta);
-        Root = new EntityComponent<INode>(new Entity(root), new CNode());
+        Root = new EntityComponent<INode>(new GdEntity(root), new CNode(new Node()));
 
         var inputCenter = new InputCenter();
         root.AddChild(inputCenter);
@@ -34,13 +34,13 @@ public class Implementation : IEngine
     public IDisplay Display { get; }
     public IApplication Application { get; }
     public IMusicPlayer MusicPlayer { get; }
-    public event Action<double>? Update;
-    public event Action<double>? PhysicsUpdate;
+    public event Action<float>? Update;
+    public event Action<float>? PhysicsUpdate;
 
     public void Spawn(IEntity entity, IEntity parent)
     {
-        var entityNode = Utils.As<Entity>(entity);
-        var parentNode = Utils.As<Entity>(entity);
+        var entityNode = Utils.As<GdEntity>(entity);
+        var parentNode = Utils.As<GdEntity>(entity);
         parentNode.AddChild(entityNode);
     }
 
@@ -277,7 +277,7 @@ public class Entities : IEntities
     public EntityComponent<INode> Node()
     {
         var node = new Node();
-        return new EntityComponent<INode>(new Entity(node), new CNode());
+        return new EntityComponent<INode>(new GdEntity(node), new CNode(node));
     }
 
     public IEntities.IUi Ui { get; } = new Ui();
@@ -285,7 +285,7 @@ public class Entities : IEntities
     public IEntities.I3D E3D { get; } = new E3D();
 }
 
-public class Entity(Node node) : IEntity
+public class GdEntity(Node node) : IEntity
 {
     private readonly Node _node = node;
     public event Action<IEntity>? ChildAdded;
@@ -307,7 +307,7 @@ public class Entity(Node node) : IEntity
 
     public IEntity RemoveChildAt(int index)
     {
-        var child = new Entity(_node.GetChild(index));
+        var child = new GdEntity(_node.GetChild(index));
         RemoveChild(child);
         return child;
     }
@@ -316,7 +316,7 @@ public class Entity(Node node) : IEntity
     {
         foreach (var child in _node.GetChildren())
             if (child is Node node1)
-                yield return new Entity(node1);
+                yield return new GdEntity(node1);
             else
                 GD.PushWarning("One of node's children is not a Node.");
     }
@@ -334,8 +334,6 @@ public class Entity(Node node) : IEntity
 
     private static Node ToNode(IEntity entity)
     {
-        return Utils.As<Entity>(entity)._node;
+        return Utils.As<GdEntity>(entity)._node;
     }
-
-    IEntity IEntityHolder.Entity => this;
 }

@@ -1,5 +1,5 @@
 using System;
-using EngineImplementations.GodotImplementation.EntitiesImplementations;
+using Attributes;
 using Gamedev;
 using Gamedev.Entities;
 using Gamedev.Localization;
@@ -7,9 +7,10 @@ using Gamedev.Resources;
 using Godot;
 using Color = Primitives.Color;
 
-namespace EngineImplementations.GodotImplementation.Components;
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
 
-internal class CTextField : ITextField
+[DelegateImplementation(typeof(IControl), nameof(Control))]
+public partial class CTextField : ITextField
 {
     private readonly DynamicFont _font;
     private readonly Label _textField;
