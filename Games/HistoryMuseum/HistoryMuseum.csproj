@@ -3,17 +3,17 @@
     <PropertyGroup>
         <TargetFramework>netstandard2.0</TargetFramework>
         <LangVersion>latest</LangVersion>
-        <PackageId>Games.Ring</PackageId>
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\Engine\Engine.csproj"/>
+        <ProjectReference Include="..\..\Primitives\Primitives.csproj"/>
         <ProjectReference Include="..\..\Utils.Engine\Utils.Engine.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="LanguageExt.Core" Version="4.4.9" />
+        <PackageReference Include="Microsoft.Bcl.Numerics" Version="10.0.1"/>
     </ItemGroup>
 
 </Project>
