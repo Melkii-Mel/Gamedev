@@ -5,12 +5,14 @@ using Attributes;
 namespace Utils.Collections;
 
 [DelegateImplementation(typeof(IList<>), nameof(_data), DelegationStyle.Implicit,
-    ["Add", "Remove", "RemoveAt", "Insert"])]
+    ["Add", "Remove", "RemoveAt", "Insert", "IsReadOnly"])]
 public partial class SwapAndPopList<T> : IList<T>
 {
     private readonly List<int> _indexes;
     private readonly List<int> _ids;
     private readonly List<T> _data;
+
+    public bool IsReadOnly => false;
 
     public SwapAndPopList(int size)
     {
@@ -35,6 +37,7 @@ public partial class SwapAndPopList<T> : IList<T>
             _data.Add(item);
             return _ids[dataLen];
         }
+
         _ids.Add(idLen);
         _indexes.Add(idLen);
         _data.Add(item);
