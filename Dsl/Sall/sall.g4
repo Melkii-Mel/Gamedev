@@ -44,7 +44,9 @@ l2SelOp: '&&';
 l3SelOp: '||';
 
 params: '(' paramList? ')';
-args: '(' expr (',' expr)* ','? ')';
+args: '(' exprOrNamed (',' exprOrNamed)* ','? ')';
+exprOrNamed: namedExpr | expr;
+namedExpr: IDENT '=' expr;
 
 classBodyItem: property ';' | anonymousClassDef;
 classNameOrSelectorExpr: className | selectorExpr;
