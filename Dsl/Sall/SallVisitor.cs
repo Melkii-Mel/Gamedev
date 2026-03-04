@@ -38,7 +38,17 @@ public class SallVisitor
 
     public static Variable VisitVariable(sallParser.VariableContext context)
     {
-        return new Variable(context.IDENT().GetText(), VisitParams(context.@params()), VisitExpr(context.expr()));
+        var result =
+            VisitExpr(context.expr() != null ? context.expr() : context.variableBody().variableResult().expr());
+        var statements = context.variableBody() != null
+            ? context.variableBody().variableStatement()
+                .Select<sallParser.VariableStatementContext, VariableStatement>(s =>
+                    s.variable() != null
+                        ? new VariableStatementVariable(VisitVariable(s.variable()))
+                        : new VariableStatementExpr(VisitExpr(s.expr()))
+                ).ToArray()
+            : [];
+        return new Variable(context.IDENT().GetText(), VisitParams(context.@params()), statements, result);
     }
 
     public static Expr VisitExpr(sallParser.ExprContext context)
@@ -82,9 +92,9 @@ public class SallVisitor
             ),
             _ when c.call() != null => new Call(c.call().IDENT().GetText(),
                 VisitArgs(c.call().args())),
-            _ when c.sizeValue() != null => new Size(
-                double.Parse(string.Join("", c.sizeValue().@float().children), CultureInfo.InvariantCulture),
-                c.sizeValue().UNIT().GetText() switch
+            _ when c.sizeValue() != null => new Size(new Dictionary<SizeUnit, double>
+            {
+                [c.sizeValue().UNIT().GetText() switch
                 {
                     "px" => SizeUnit.Px,
                     "%" => SizeUnit.Percent,
@@ -93,7 +103,8 @@ public class SallVisitor
                     "vh" => SizeUnit.Vh,
                     "vw" => SizeUnit.Vw,
                     _ => throw new ArgumentOutOfRangeException(),
-                }),
+                }] = double.Parse(string.Join("", c.sizeValue().@float().children), CultureInfo.InvariantCulture),
+            }),
             _ when c.@uint() != null => new Uint(uint.Parse(c.@uint().DIGITS().GetText())),
             _ when c.@bool() != null => new Bool(bool.Parse(c.@bool().GetText())),
             _ => throw new ArgumentOutOfRangeException(),
@@ -102,9 +113,11 @@ public class SallVisitor
 
     public static Args VisitArgs(sallParser.ArgsContext? context)
     {
-        return new Args(context?.expr()
-            .Select(VisitExpr)
-            .ToArray() ?? []);
+        var args = context?.exprOrNamed();
+        if (args == null) return new Args([], []);
+        return new Args(args.Where(a => a.expr() != null).Select(a => VisitExpr(a.expr())).ToArray(),
+            args.Where(a => a.namedExpr() != null).Select(a => a.namedExpr())
+                .ToDictionary(a => a.IDENT().GetText(), a => VisitExpr(a.expr())));
     }
 
     public static SelectorChain VisitSelectorExpr(sallParser.SelectorExprContext ctx)
@@ -183,8 +196,11 @@ public class SallVisitor
     public static State[] VisitStateMap(sallParser.StateMapSelectorContext? context)
     {
         return context?.state().Select(s =>
-            new State(s.IDENT()?.GetText() ?? s.stateKvp().IDENT().GetText(),
-                s.stateKvp() != null ? VisitExpr(s.stateKvp().expr()) : null)).ToArray() ?? [];
+        {
+            if (s.stateKvp() is { } kvp)
+                return new State(kvp.IDENT().GetText(), OperatorMap.Comps[kvp.comp().GetText()], VisitExpr(kvp.expr()));
+            return new State(s.IDENT().GetText(), null, null);
+        }).ToArray() ?? [];
     }
 
     public static AnonymousClass VisitAnonymousClassDef(sallParser.AnonymousClassDefContext context)

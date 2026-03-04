@@ -37,4 +37,14 @@ public static class OperatorMap
     {
         { "!", UnarySelectorOperation.Not },
     };
+
+    public static readonly Dictionary<string, Comp> Comps = new()
+    {
+        { "==", Comp.Eq },
+        { "!=", Comp.Ne },
+        { "<", Comp.Lt },
+        { ">", Comp.Gt },
+        { "<=", Comp.Le },
+        { ">=", Comp.Ge },
+    };
 }

@@ -1,4 +1,8 @@
-﻿namespace Sall;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Sall;
 
 public enum BinaryOperation
 {
@@ -44,6 +48,16 @@ public enum SizeUnit
     Vw,
 }
 
+public enum Comp
+{
+    Eq,
+    Ne,
+    Lt,
+    Gt,
+    Le,
+    Ge,
+}
+
 public record Stylesheet(Variable[] Variables, AnonymousClass[] AnonymousClasses, NamedClass[] NamedClasses);
 
 public abstract record ExprOrValue;
@@ -58,19 +72,46 @@ public record AtomExpr(ExprOrValue ExprOrValue) : UnaryOrAtomExpr;
 
 public abstract record UnaryOrAtomExpr : Expr;
 
+public interface INormalizedValue;
+
 public abstract record Value : ExprOrValue;
 
-public record Bool(bool Value) : Value;
+public record Bool(bool Value) : Value, INormalizedValue;
 
 public abstract record Number : Value;
 
 public record Uint(uint Value) : Number;
 
-public record Double(double Value) : Number;
+public record Double(double Value) : Number, INormalizedValue;
 
-public record Size(double Value, SizeUnit Unit) : Value;
+public record Size(Dictionary<SizeUnit, double> ValuePerUnit) : Value, INormalizedValue
+{
+    public static Size operator +(Size a, Size b)
+    {
+        return Op(a, b, (da, db) => da + db);
+    }
 
-public record Color(Primitives.Color Value) : Value;
+    public static Size operator -(Size a, Size b)
+    {
+        return Op(a, b, (da, db) => da - db);
+    }
+
+    private static Size Op(Size a, Size b, Func<double, double, double> op)
+    {
+        var result = new Dictionary<SizeUnit, double>(b.ValuePerUnit);
+
+        foreach (var kvp in a.ValuePerUnit)
+        {
+            var (unit, value) = (kvp.Key, kvp.Value);
+            result.TryGetValue(unit, out var existing);
+            result[unit] = op(existing, value);
+        }
+
+        return new Size(result);
+    }
+}
+
+public record Color(Primitives.Color Value) : Value, INormalizedValue;
 
 public record Call(string Ident, Args Args) : Value;
 
@@ -85,8 +126,8 @@ public record AnonymousClass(
     AnonymousClass[] SubClasses)
     : Class(Parents, Properties, SubClasses);
 
-public record NamedClass(string Name, Parent[] Parents, Property[] Properties, AnonymousClass[] SubClasses)
-    : Class(Parents, Properties, SubClasses);
+public record NamedClass(string Ident, Parent[] Parents, Property[] Properties, AnonymousClass[] SubClasses)
+    : Class(Parents, Properties, SubClasses), ISymbol;
 
 public record Parent(string Ident, Args Args);
 
@@ -142,10 +183,21 @@ public record LeftUnboundedRange(Expr Expr) : Range;
 
 public record BoundedRange(Expr Left, Expr Right) : Range;
 
-public record State(string Ident, Expr? Expr);
+public interface ISymbol
+{
+    string Ident { get; }
+}
 
-public record Variable(string Name, Param[] Params, Expr Expr);
+public record State(string Ident, Comp? Comp, Expr? Expr);
 
-public record Args(Expr[] Expressions);
+public record Variable(string Ident, Param[] Params, VariableStatement[] Statements, Expr Result) : ISymbol;
+
+public abstract record VariableStatement;
+
+public record VariableStatementVariable(Variable Variable) : VariableStatement;
+
+public record VariableStatementExpr(Expr Expr) : VariableStatement;
+
+public record Args(Expr[] PositionalExpressions, Dictionary<string, Expr> NamedExpressions);
 
 public record Param(string Ident, Expr DefaultValue);

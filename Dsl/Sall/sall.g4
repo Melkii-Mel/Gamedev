@@ -8,7 +8,10 @@ file: statement*;
 
 statement: variable | namedClassDef | anonymousClassDef;
 
-variable: 'let' IDENT params? '=' expr ';';
+variable: 'let' IDENT params? '=' (expr | variableBody) ';';
+variableBody: '{' (variableStatement)* variableResult '}';
+variableStatement: (variable | expr) ';';
+variableResult: expr | ('return' expr ';');
 
 namedClassDef: className classContent;
 anonymousClassDef: selectorExpr classContent;

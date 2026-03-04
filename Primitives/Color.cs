@@ -5,6 +5,50 @@ namespace Primitives;
 
 public readonly record struct Color(float R, float G, float B, float A)
 {
+    #region operations
+
+    public static Color operator +(Color a, Color b)
+    {
+        return new Color(a.R + b.R, a.G + b.G, a.B + b.B, a.A + b.A);
+    }
+
+    public static Color operator -(Color a, Color b)
+    {
+        return new Color(a.R - b.R, a.G - b.G, a.B - b.B, a.A - b.A);
+    }
+
+    public static Color operator -(Color c)
+    {
+        return new Color(1 - c.R, 1 - c.G, 1 - c.B, c.A);
+    }
+
+    public static Color operator *(Color a, Color b)
+    {
+        return new Color(a.R * b.R, a.G * b.G, a.B * b.B, a.A * b.A);
+    }
+
+    public static Color operator *(Color a, float b)
+    {
+        return new Color(a.R * b, a.G * b, a.B * b, a.A * b);
+    }
+
+    public static Color operator /(Color a, float b)
+    {
+        return a * (1 / b);
+    }
+
+    public static Color operator /(Color a, Color b)
+    {
+        return new Color(a.R / b.R, a.G / b.G, a.B / b.B, a.A / b.A);
+    }
+
+    public static Color operator *(float b, Color a)
+    {
+        return a * b;
+    }
+
+    #endregion
+    
     #region parsing
 
     public static Color ParseRgba(string s)
