@@ -130,7 +130,12 @@ public record AnonymousClass(
     AnonymousClass[] SubClasses)
     : Class(Parents, Properties, SubClasses);
 
-public record NamedClass(string Ident, Parent[] Parents, Property[] Properties, AnonymousClass[] SubClasses)
+public record NamedClass(
+    string Ident,
+    Param[] Params,
+    Parent[] Parents,
+    Property[] Properties,
+    AnonymousClass[] SubClasses)
     : Class(Parents, Properties, SubClasses), ISymbol;
 
 public record NormalizedClass(SelectorChain SelectorChain, Dictionary<string, Value> PropertyValues);

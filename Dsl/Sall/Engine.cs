@@ -298,39 +298,45 @@ public record LayoutContext(
     Expr SelfWidth,
     Expr SelfHeight);
 
+/// <summary>
+/// A collection of classes local to a certain Scope
+/// </summary>
+/// <param name="Classes"></param>
 public record Stylespace(
-    Scope Scope,
-    Dictionary<SelectorChain, Class> Classes
+    Dictionary<string, Variable> Variables,
+    Dictionary<string, NamedClass> NamedClasses,
+    Dictionary<SelectorChain, Class> Classes,
+    Dictionary<SelectorChain, AnonymousClass> AnonymousClasses
 )
 {
     public static Stylespace FromStylesheets(params Stylesheet[] stylesheets)
     {
-        var symbols = new Dictionary<string, ISymbol>();
-        var classes = new Dictionary<SelectorChain, Class>();
+        var result = new Stylespace([], [], [], []);
         foreach (var stylesheet in stylesheets)
         {
             foreach (var variable in stylesheet.Variables)
             {
-                symbols.Add(variable.Ident, variable);
+                result.Variables.Add(variable.Ident, variable);
             }
 
             foreach (var anonymousClass in stylesheet.AnonymousClasses)
             {
-                classes.Add(anonymousClass.SelectorChain, anonymousClass);
+                result.Classes.Add(anonymousClass.SelectorChain, anonymousClass);
+                result.AnonymousClasses.Add(anonymousClass.SelectorChain, anonymousClass);
             }
 
             foreach (var namedClass in stylesheet.NamedClasses)
             {
-                classes.Add(
+                result.Classes.Add(
                     new SelectorChain(new ValueArray<SelectorExpr>([
                         new AtomSelectorExpr(new MarkerSelector(namedClass.Ident)),
                     ])),
                     namedClass);
-                symbols.Add(namedClass.Ident, namedClass);
+                result.NamedClasses.Add(namedClass.Ident, namedClass);
             }
         }
 
-        return new Stylespace(new Scope(null, symbols), classes);
+        return result;
     }
 }
 
@@ -356,5 +362,15 @@ public record Scope(
     public void Add(string name, ISymbol symbol)
     {
         Symbols.Add(name, symbol);
+    }
+
+    public void AddOrReplace(string name, ISymbol symbol)
+    {
+        Symbols[name] = symbol;
+    }
+
+    public void AddIfNotExists(string name, ISymbol symbol)
+    {
+        if (!Symbols.ContainsKey(name)) Symbols[name] = symbol;
     }
 }

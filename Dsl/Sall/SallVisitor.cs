@@ -214,7 +214,7 @@ public class SallVisitor
     public static NamedClass VisitNamedClassDef(sallParser.NamedClassDefContext context)
     {
         var (parents, properties, subClasses) = VisitClassContent(context.classContent());
-        return new NamedClass(context.className().GetText(), parents, properties, subClasses);
+        return new NamedClass(context.className().IDENT().GetText(), VisitParams(context.className().@params()), parents, properties, subClasses);
     }
 
     public static AnonymousClass VisitAnonymousClassDef(SelectorChain selectorChain,
