@@ -2,14 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using Primitives;
+using Silk.NET.Maths;
 
 namespace Sall;
 
-public static class Engine
-{
-}
-
-public class Evaluator(Scope scope)
+// TODO: Add [pw, ph, sw, sh] to the .g4
+public class Evaluator(Scope scope, LayoutContext layoutContext)
 {
     public Value Eval(Expr expr)
     {
@@ -56,12 +54,12 @@ public class Evaluator(Scope scope)
         {
             BinaryOperation.Or => BoolOp((a, b) => a || b),
             BinaryOperation.And => BoolOp((a, b) => a && b),
-            BinaryOperation.Lt => BoolOpNums((a, b) => Compare(a, b) < 0),
-            BinaryOperation.Le => BoolOpNums((a, b) => Compare(a, b) <= 0),
-            BinaryOperation.Gt => BoolOpNums((a, b) => Compare(a, b) > 0),
-            BinaryOperation.Ge => BoolOpNums((a, b) => Compare(a, b) >= 0),
-            BinaryOperation.Eq => BoolOpNums((a, b) => Compare(a, b) == 0),
-            BinaryOperation.Ne => BoolOpNums((a, b) => Compare(a, b) != 0),
+            BinaryOperation.Lt => NumComp((a, b) => Compare(a, b) < 0),
+            BinaryOperation.Le => NumComp((a, b) => Compare(a, b) <= 0),
+            BinaryOperation.Gt => NumComp((a, b) => Compare(a, b) > 0),
+            BinaryOperation.Ge => NumComp((a, b) => Compare(a, b) >= 0),
+            BinaryOperation.Eq => NumComp((a, b) => Compare(a, b) == 0),
+            BinaryOperation.Ne => NumComp((a, b) => Compare(a, b) != 0),
             BinaryOperation.Add => Op(binaryExpr, BinaryOperation.Add),
             BinaryOperation.Subtract => Op(binaryExpr, BinaryOperation.Subtract),
             BinaryOperation.Multiply => Op(binaryExpr, BinaryOperation.Multiply),
@@ -70,7 +68,7 @@ public class Evaluator(Scope scope)
             _ => throw new ArgumentOutOfRangeException(),
         };
 
-        Value BoolOpNums(Func<IComparable, IComparable, bool> opFunc)
+        Value NumComp(Func<IComparable, IComparable, bool> opFunc)
         {
             return new Bool(opFunc(ToComparable(Eval(binaryExpr.Left)), ToComparable(Eval(binaryExpr.Right))));
         }
@@ -86,11 +84,36 @@ public class Evaluator(Scope scope)
         return NormalizeValue(value) switch
         {
             Bool b => b.Value,
-            Color color => throw new ArgumentException(),
+            Color => throw new ArgumentException(),
             Double d => d.Value,
             Size size => ToAbsoluteSize(size),
             _ => throw new ArgumentOutOfRangeException(nameof(value)),
         };
+    }
+
+    private double ToAbsoluteSize(Size size)
+    {
+        return (from unit in size.ValuePerUnit
+            let v = unit.Value
+            select unit.Key switch
+            {
+                SizeUnit.Px => v,
+                SizeUnit.Pw => layoutContext.ParentSize.X * v,
+                SizeUnit.Ph => layoutContext.ParentSize.Y * v,
+                SizeUnit.Vw => layoutContext.RootSize.X * v,
+                SizeUnit.Vh => layoutContext.RootSize.Y * v,
+                // TODO: Guard against circular dependencies
+                SizeUnit.Sw => EvalDouble(layoutContext.SelfWidth) * v,
+                SizeUnit.Sh => EvalDouble(layoutContext.SelfHeight) * v,
+                SizeUnit.Em => layoutContext.ParentFontSize * v,
+                SizeUnit.Rem => layoutContext.RootFontSize * v,
+                _ => throw new ArgumentOutOfRangeException(),
+            }).Sum();
+
+        double EvalDouble(Expr expr)
+        {
+            return ((Double)Eval(expr)).Value;
+        }
     }
 
     private int Compare(IComparable c0, IComparable c1)
@@ -148,33 +171,97 @@ public class Evaluator(Scope scope)
 
     private Value Exec(Call call)
     {
-        Scope? currentScope = scope;
-        Variable? variable = null;
-        while (currentScope != null)
-        {
-            if (scope.GetSymbol(call.Ident) is Variable v)
-            {
-                if (v.Params.Length != call.Args.NamedExpressions.Count + call.Args.PositionalExpressions.Length)
-                    continue;
-                variable = v;
-                break;
-            }
+        return Deref(new VariableRef(call.Ident), call.Args);
+    }
 
-            currentScope = currentScope.Parent;
+    private Value Deref(VariableRef vRef, Args? args = null)
+    {
+        var symbol = scope.GetSymbol(vRef.Ident);
+        if (symbol is not Variable variable)
+        {
+            throw new ArgumentException();
         }
 
+        if (variable.Params.Length > 0 && args is null) return variable;
 
-        if (variable is null) throw new KeyNotFoundException();
-        foreach (var param in variable.Params)
+        var variableScope = new Scope(scope, ParamsToSymbols());
+        var evaluator = new Evaluator(variableScope, layoutContext);
+
+        return ComputeVar(variable, evaluator, variableScope);
+
+        // TODO: Try to allow referencing other parameters in the default parameter values
+        Dictionary<string, ISymbol> ParamsToSymbols()
         {
-            if (call.Args.NamedExpressions.ContainsKey(param.Ident))
+            var ignoredIndexes = new List<int>();
+            var symbols = new Dictionary<string, ISymbol>();
+            args ??= new Args([], []);
+            var argsNamedExpressionIdentArray = args.NamedExpressions.Keys.ToArray();
+            foreach (var argIdent in argsNamedExpressionIdentArray)
             {
+                var arg = args.NamedExpressions[argIdent];
+                var ident = argIdent;
+                var paramIndex = Array.FindIndex(variable.Params, p => p.Ident == ident);
+                if (paramIndex != -1)
+                {
+                    ignoredIndexes.Add(paramIndex);
+                    symbols.Add(argIdent, new BakedVariable(argIdent, Eval(arg)));
+                }
+                else
+                {
+                    throw new ArgumentException();
+                }
             }
+
+            var posI = -1;
+            foreach (var expr in args.PositionalExpressions)
+            {
+                posI++;
+                while (ignoredIndexes.Contains(posI))
+                {
+                    posI++;
+                }
+
+                // TODO: CAN THROW
+                var param = variable.Params[posI];
+                symbols.Add(param.Ident, new BakedVariable(param.Ident, Eval(expr)));
+            }
+
+            while (posI < variable.Params.Length)
+            {
+                posI++;
+                while (ignoredIndexes.Contains(posI))
+                {
+                    posI++;
+                }
+
+                var param = variable.Params[posI];
+                symbols.Add(param.Ident, new BakedVariable(param.Ident, Eval(param.DefaultValue)));
+            }
+
+            return symbols;
         }
     }
 
-    private Value Deref(VariableRef vRef)
+    private Value ComputeVar(Variable variable, Evaluator evaluator, Scope variableScope)
     {
+        foreach (var statement in variable.Statements)
+        {
+            switch (statement)
+            {
+                case VariableStatementVariable variableStatementVariable:
+                    var v = variableStatementVariable.Variable;
+                    if (v.Params.Length == 0)
+                        variableScope.Add(v.Ident,
+                            new BakedVariable(v.Ident, ComputeVar(variable, evaluator, variableScope)));
+                    else variableScope.Add(v.Ident, v);
+                    break;
+                case VariableStatementExpr expr:
+                    Eval(expr.Expr);
+                    break;
+            }
+        }
+
+        return evaluator.Eval(variable.Result);
     }
 
     private Type GetType(Value value)
@@ -203,6 +290,14 @@ public class Evaluator(Scope scope)
     }
 }
 
+public record LayoutContext(
+    Vector2D<float> ParentSize,
+    Vector2D<float> RootSize,
+    float ParentFontSize,
+    float RootFontSize,
+    Expr SelfWidth,
+    Expr SelfHeight);
+
 public record Stylespace(
     Scope Scope,
     Dictionary<SelectorChain, Class> Classes
@@ -226,9 +321,15 @@ public record Stylespace(
 
             foreach (var namedClass in stylesheet.NamedClasses)
             {
-                classes.Add(new SelectorChain(new []{new AtomSelectorExpr() namedClass.Ident}));
+                classes.Add(
+                    new SelectorChain(new ValueArray<SelectorExpr>([
+                        new AtomSelectorExpr(new MarkerSelector(namedClass.Ident)),
+                    ])),
+                    namedClass);
+                symbols.Add(namedClass.Ident, namedClass);
             }
         }
+
         return new Stylespace(new Scope(null, symbols), classes);
     }
 }
@@ -250,5 +351,10 @@ public record Scope(
                  (Parent?.GetAllAvailableSymbols() ?? []).Where(symbol => !merged.ContainsKey(symbol.Key)))
             merged[symbol.Key] = symbol.Value;
         return merged;
+    }
+
+    public void Add(string name, ISymbol symbol)
+    {
+        Symbols.Add(name, symbol);
     }
 }

@@ -97,11 +97,14 @@ public class SallVisitor
                 [c.sizeValue().UNIT().GetText() switch
                 {
                     "px" => SizeUnit.Px,
-                    "%" => SizeUnit.Percent,
+                    "%" or "pw" => SizeUnit.Pw,
+                    "ph" => SizeUnit.Ph,
                     "em" => SizeUnit.Em,
                     "rem" => SizeUnit.Rem,
                     "vh" => SizeUnit.Vh,
                     "vw" => SizeUnit.Vw,
+                    "sw" => SizeUnit.Sw,
+                    "sh" => SizeUnit.Sh,
                     _ => throw new ArgumentOutOfRangeException(),
                 }] = double.Parse(string.Join("", c.sizeValue().@float().children), CultureInfo.InvariantCulture),
             }),
@@ -128,9 +131,9 @@ public class SallVisitor
             c => ((sallParser.L2SelContext)c).l1Sel(0),
         };
 
-        return new SelectorChain(ctx.l4Sel().l3Sel().Select(c =>
+        return new SelectorChain(new ValueArray<SelectorExpr>(ctx.l4Sel().l3Sel().Select(c =>
             VisitBinRecursive<SelectorExpr>(c, precedenceChain, prc => VisitL1Selector((sallParser.L1SelContext)prc),
-                (s, l, r) => new BinarySelectorExpr(OperatorMap.BinSelectorOperations[s], l, r))).ToArray());
+                (s, l, r) => new BinarySelectorExpr(OperatorMap.BinSelectorOperations[s], l, r))).ToArray()));
     }
 
     public static UnaryOrAtomSelectorExpr VisitL1Selector(sallParser.L1SelContext ctx)

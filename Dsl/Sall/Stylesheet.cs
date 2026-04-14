@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 
 namespace Sall;
@@ -41,7 +42,10 @@ public enum UnarySelectorOperation
 public enum SizeUnit
 {
     Px,
-    Percent,
+    Pw,
+    Ph,
+    Sw,
+    Sh,
     Em,
     Rem,
     Vh,
@@ -129,11 +133,13 @@ public record AnonymousClass(
 public record NamedClass(string Ident, Parent[] Parents, Property[] Properties, AnonymousClass[] SubClasses)
     : Class(Parents, Properties, SubClasses), ISymbol;
 
+public record NormalizedClass(SelectorChain SelectorChain, Dictionary<string, Value> PropertyValues);
+
 public record Parent(string Ident, Args Args);
 
 public record Property(string Ident, Expr Expr);
 
-public record SelectorChain(SelectorExpr[] Selectors) : SelectorExpr;
+public abstract record Selector : SelectorExprOrSelector;
 
 public abstract record SelectorExprOrSelector;
 
@@ -149,7 +155,7 @@ public record UnarySelectorExpr(UnarySelectorOperation Operation, UnaryOrAtomSel
 
 public record AtomSelectorExpr(SelectorExprOrSelector SelectorExprOrSelector) : UnaryOrAtomSelectorExpr;
 
-public abstract record Selector : SelectorExprOrSelector;
+public record SelectorChain(ValueArray<SelectorExpr> Selectors) : SelectorExpr;
 
 public record UiSelector(string Ident) : Selector;
 
@@ -190,7 +196,9 @@ public interface ISymbol
 
 public record State(string Ident, Comp? Comp, Expr? Expr);
 
-public record Variable(string Ident, Param[] Params, VariableStatement[] Statements, Expr Result) : ISymbol;
+public record Variable(string Ident, Param[] Params, VariableStatement[] Statements, Expr Result) : Value, ISymbol;
+
+public record BakedVariable(string Ident, Value Value) : Value, ISymbol;
 
 public abstract record VariableStatement;
 
@@ -201,3 +209,17 @@ public record VariableStatementExpr(Expr Expr) : VariableStatement;
 public record Args(Expr[] PositionalExpressions, Dictionary<string, Expr> NamedExpressions);
 
 public record Param(string Ident, Expr DefaultValue);
+
+public readonly record struct ValueArray<T>(T[] Items) where T : IEquatable<T>
+{
+    public bool Equals(ValueArray<T> other) =>
+        Items.AsSpan().SequenceEqual(other.Items.AsSpan());
+
+    public override int GetHashCode()
+    {
+        var hash = new HashCode();
+        foreach (var item in Items)
+            hash.Add(item);
+        return hash.ToHashCode();
+    }
+}
