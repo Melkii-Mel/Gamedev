@@ -24,36 +24,50 @@ public class Engine
 
     public Engine(Node root, Stylespace stylespace)
     {
-        foreach (var selectorClass in stylespace.Classes)
+        var scope = new Scope(null, []);
+
+        return;
+
+        List<NormalizedClass> NormalizeClasses(Dictionary<SelectorChain, Class> classes)
         {
-            var markers = new ValueSet<string>();
-            foreach (var selectorsItem in selectorClass.Key.Selectors.Items)
+            foreach (var kvp in classes)
             {
-                if (selectorsItem is not AtomSelectorExpr
-                    {
-                        SelectorExprOrSelector: MarkerSelector markerSelector
-                    }) throw new NotSupportedException();
-                markers.Add(markerSelector.Ident);
+                var selectors = kvp.Key.Selectors;
+                var @class = kvp.Value;
+                var markers = new ValueSet<string>();
+                foreach (var selectorsItem in selectors.Items)
+                {
+                    if (selectorsItem is not AtomSelectorExpr
+                        {
+                            SelectorExprOrSelector: MarkerSelector markerSelector,
+                        }) throw new NotSupportedException();
+                    markers.Add(markerSelector.Ident);
+                }
+                _normalizedClasses.Add(new NormalizedClass(markers, MergeClassProperties(@class, scope).ToArray()));
             }
-            _normalizedClasses.Add(new NormalizedClass(markers, selectorClass.Value.Properties));
         }
 
-        IEnumerable<NormalizedProperty> MergeClassProperties(Class c, Scope scope)
+        IEnumerable<NormalizedProperty> MergeClassProperties(Class c, Scope s)
         {
-            IEnumerable<NormalizedProperty> properties = NormalizeProperties(c.Properties);
+            var properties = NormalizeProperties(c.Properties);
             foreach (var inheritance in c.Parents)
             {
                 // TODO: Error message on invalid call
                 var parent = stylespace.NamedClasses[inheritance.Ident];
-                var localScope = new Scope(scope, new Dictionary<string, ISymbol>());
+                var localScope = new Scope(s, new Dictionary<string, ISymbol>());
+                localScope.AddParamsToScope(parent.Params, inheritance);
+                foreach (var param in parent.Params)
+                {
+                    localScope.Add(param.Ident, );
+                }
                 
-                properties = properties.Union(MergeClassProperties(parent));
+                properties = properties.Union(MergeClassProperties(parent, localScope));
             }
             return properties;
 
             IEnumerable<NormalizedProperty> NormalizeProperties(IEnumerable<Property> ps)
             {
-                return ps.Select(p => new NormalizedProperty(scope, p.Ident, p.Expr));
+                return ps.Select(p => new NormalizedProperty(s, p.Ident, p.Expr));
             }
         }
     }

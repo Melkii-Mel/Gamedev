@@ -184,62 +184,11 @@ public class Evaluator(Scope scope, LayoutContext layoutContext)
 
         if (variable.Params.Length > 0 && args is null) return variable;
 
-        var variableScope = new Scope(scope, ParamsToSymbols());
+        var variableScope = new Scope(scope, []);
+        variableScope.AddParamsToScope(variable.Params, args);
         var evaluator = new Evaluator(variableScope, layoutContext);
 
         return ComputeVar(variable, evaluator, variableScope);
-
-        // TODO: Try to allow referencing other parameters in the default parameter values
-        Dictionary<string, ISymbol> ParamsToSymbols()
-        {
-            var ignoredIndexes = new List<int>();
-            var symbols = new Dictionary<string, ISymbol>();
-            args ??= new Args([], []);
-            var argsNamedExpressionIdentArray = args.NamedExpressions.Keys.ToArray();
-            foreach (var argIdent in argsNamedExpressionIdentArray)
-            {
-                var arg = args.NamedExpressions[argIdent];
-                var ident = argIdent;
-                var paramIndex = Array.FindIndex(variable.Params, p => p.Ident == ident);
-                if (paramIndex != -1)
-                {
-                    ignoredIndexes.Add(paramIndex);
-                    symbols.Add(argIdent, new BakedVariable(argIdent, Eval(arg)));
-                }
-                else
-                {
-                    throw new ArgumentException();
-                }
-            }
-
-            var posI = -1;
-            foreach (var expr in args.PositionalExpressions)
-            {
-                posI++;
-                while (ignoredIndexes.Contains(posI))
-                {
-                    posI++;
-                }
-
-                // TODO: CAN THROW
-                var param = variable.Params[posI];
-                symbols.Add(param.Ident, new BakedVariable(param.Ident, Eval(expr)));
-            }
-
-            while (posI < variable.Params.Length)
-            {
-                posI++;
-                while (ignoredIndexes.Contains(posI))
-                {
-                    posI++;
-                }
-
-                var param = variable.Params[posI];
-                symbols.Add(param.Ident, new BakedVariable(param.Ident, Eval(param.DefaultValue)));
-            }
-
-            return symbols;
-        }
     }
 
     private Value ComputeVar(Variable variable, Evaluator evaluator, Scope variableScope)
@@ -372,5 +321,55 @@ public record Scope(
     public void AddIfNotExists(string name, ISymbol symbol)
     {
         if (!Symbols.ContainsKey(name)) Symbols[name] = symbol;
+    }
+    
+    
+    // TODO: Try to allow referencing other parameters in the default parameter values
+    public void AddParamsToScope(Param[] @params, Args? args)
+    {
+        var ignoredIndexes = new List<int>();
+        args ??= new Args([], []);
+        var argsNamedExpressionIdentArray = args.NamedExpressions.Keys.ToArray();
+        foreach (var argIdent in argsNamedExpressionIdentArray)
+        {
+            var arg = args.NamedExpressions[argIdent];
+            var ident = argIdent;
+            var paramIndex = Array.FindIndex(@params, p => p.Ident == ident);
+            if (paramIndex != -1)
+            {
+                ignoredIndexes.Add(paramIndex);
+                Symbols.Add(argIdent, new Variable(argIdent, arg));
+            }
+            else
+            {
+                throw new ArgumentException();
+            }
+        }
+
+        var posI = -1;
+        foreach (var expr in args.PositionalExpressions)
+        {
+            posI++;
+            while (ignoredIndexes.Contains(posI))
+            {
+                posI++;
+            }
+
+            // TODO: CAN THROW
+            var param = @params[posI];
+            Symbols.Add(param.Ident, new Variable(param.Ident, expr));
+        }
+
+        while (posI < @params.Length)
+        {
+            posI++;
+            while (ignoredIndexes.Contains(posI))
+            {
+                posI++;
+            }
+
+            var param = @params[posI];
+            Symbols.Add(param.Ident, new Variable(param.Ident, param.DefaultValue));
+        }
     }
 }

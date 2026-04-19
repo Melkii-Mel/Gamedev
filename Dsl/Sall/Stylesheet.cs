@@ -201,7 +201,12 @@ public interface ISymbol
 
 public record State(string Ident, Comp? Comp, Expr? Expr);
 
-public record Variable(string Ident, Param[] Params, VariableStatement[] Statements, Expr Result) : Value, ISymbol;
+public record Variable(string Ident, Param[] Params, VariableStatement[] Statements, Expr Result) : Value, ISymbol
+{
+    public Variable(string ident, Expr result) : this(ident, [], [], result)
+    {
+    }
+}
 
 public record BakedVariable(string Ident, Value Value) : Value, ISymbol;
 
