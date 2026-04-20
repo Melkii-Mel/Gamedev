@@ -13,6 +13,8 @@ public record Node(
 
 public record NormalizedClass(ValueSet<string> Markers, NormalizedProperty[] Properties);
 
+public record NormalizedNamedClass(string Name, NormalizedProperty[] Properties) : NormalizedClass([Name], Properties);
+
 public record NormalizedProperty(Scope Scope, string Ident, Expr Expr);
 
 // TODO: Error handling (severity levels, debug printing instead of throwing)
@@ -25,8 +27,38 @@ public class Engine
     public Engine(Node root, Stylespace stylespace)
     {
         var scope = new Scope(null, []);
+        var normalizedNamedClasses = NormalizeNamedClasses(stylespace.NamedClasses);
 
         return;
+
+        Dictionary<string, NormalizedClass> NormalizeNamedClasses(Dictionary<string, NamedClass> namedClasses)
+        {
+            var result = new Dictionary<string, NormalizedClass>(namedClasses.Count);
+            var classProcessing = new Dictionary<string, ClassProcessing>(namedClasses.Count);
+            foreach (var namedClass in namedClasses)
+            {
+                NormalizeClassOrSkip(namedClass)
+            }
+
+            void NormalizeClassOrSkip(string className)
+            {
+                var @class = namedClasses[className];
+                if (classProcessing.TryGetValue(className, out var state))
+                {
+                    if (state == ClassProcessing.Started)
+                        throw new InvalidOperationException($"Cyclic reference detected for class {className}");
+                    if (state == ClassProcessing.Finished) return;
+                }
+
+                var properties = @class.Properties;
+                foreach (var parent in @class.Parents)
+                {
+                    NormalizeClassOrSkip(parent.Ident);
+                }
+
+                var normalizedClass = new NormalizedNamedClass(className, );
+            }
+        }
 
         List<NormalizedClass> NormalizeClasses(Dictionary<SelectorChain, Class> classes)
         {
@@ -43,6 +75,7 @@ public class Engine
                         }) throw new NotSupportedException();
                     markers.Add(markerSelector.Ident);
                 }
+
                 _normalizedClasses.Add(new NormalizedClass(markers, MergeClassProperties(@class, scope).ToArray()));
             }
         }
@@ -58,11 +91,12 @@ public class Engine
                 localScope.AddParamsToScope(parent.Params, inheritance);
                 foreach (var param in parent.Params)
                 {
-                    localScope.Add(param.Ident, );
+                    localScope.Add(param.Ident,);
                 }
-                
+
                 properties = properties.Union(MergeClassProperties(parent, localScope));
             }
+
             return properties;
 
             IEnumerable<NormalizedProperty> NormalizeProperties(IEnumerable<Property> ps)
@@ -80,6 +114,12 @@ public class Engine
     {
         node
     }
+}
+
+public enum ClassProcessing
+{
+    Started,
+    Finished
 }
 
 public class ValueSet<T> : HashSet<T>
