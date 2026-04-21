@@ -37,12 +37,12 @@ public class Engine
             var classProcessing = new Dictionary<string, ClassProcessing>(namedClasses.Count);
             foreach (var namedClass in namedClasses)
             {
-                NormalizeClassOrSkip(namedClass)
+                NormalizeClass(namedClass.Key, []);
             }
 
-            void NormalizeClassOrSkip(string className)
+            void NormalizeClass(string className, Args args)
             {
-                var @class = namedClasses[className];
+                var (parents, properties, anonymousClasses) = namedClasses[className];
                 if (classProcessing.TryGetValue(className, out var state))
                 {
                     if (state == ClassProcessing.Started)
@@ -50,10 +50,9 @@ public class Engine
                     if (state == ClassProcessing.Finished) return;
                 }
 
-                var properties = @class.Properties;
-                foreach (var parent in @class.Parents)
+                foreach (var parent in parents)
                 {
-                    NormalizeClassOrSkip(parent.Ident);
+                    NormalizeClass(parent.Ident, parent.Args);
                 }
 
                 var normalizedClass = new NormalizedNamedClass(className, );
