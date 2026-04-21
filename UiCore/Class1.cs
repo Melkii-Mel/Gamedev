@@ -26,36 +26,34 @@ public class Engine
 
     public Engine(Node root, Stylespace stylespace)
     {
-        var scope = new Scope(null, []);
         var normalizedNamedClasses = NormalizeNamedClasses(stylespace.NamedClasses);
 
         return;
 
         Dictionary<string, NormalizedClass> NormalizeNamedClasses(Dictionary<string, NamedClass> namedClasses)
         {
+            var scope = new Scope(null, []);
             var result = new Dictionary<string, NormalizedClass>(namedClasses.Count);
-            var classProcessing = new Dictionary<string, ClassProcessing>(namedClasses.Count);
+            var classDeps = new ClassDeps();
             foreach (var namedClass in namedClasses)
             {
-                NormalizeClass(namedClass.Key, []);
+                classDeps.Clear();
+                NormalizeClass(namedClass.Key, null);
             }
 
-            void NormalizeClass(string className, Args args)
+            void NormalizeClass(string className, Args? args)
             {
-                var (parents, properties, anonymousClasses) = namedClasses[className];
-                if (classProcessing.TryGetValue(className, out var state))
-                {
-                    if (state == ClassProcessing.Started)
-                        throw new InvalidOperationException($"Cyclic reference detected for class {className}");
-                    if (state == ClassProcessing.Finished) return;
-                }
+                classDeps.Add(className);
 
-                foreach (var parent in parents)
-                {
-                    NormalizeClass(parent.Ident, parent.Args);
-                }
+                var (_, @params, parents, properties, anonymousClasses) = namedClasses[className];
+                if (classDeps.Contains(className))
 
-                var normalizedClass = new NormalizedNamedClass(className, );
+                    foreach (var parent in parents)
+                    {
+                        NormalizeClass(parent.Ident, parent.Args);
+                    }
+
+                var normalizedClass = new NormalizedNamedClass(className,);
             }
         }
 
@@ -132,5 +130,16 @@ public class ValueSet<T> : HashSet<T>
     {
         if (other is null) return false;
         return GetHashCode() == other.GetHashCode();
+    }
+}
+
+public class ClassDeps : HashSet<string>
+{
+    public new void Add(string s)
+    {
+        // TODO: Exception type and message
+        if (Contains(s))
+            throw new InvalidOperationException($"Cyclic reference detected for class {s}");
+        base.Add(s);
     }
 }
