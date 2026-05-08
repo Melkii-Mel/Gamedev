@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Linq;
 
-namespace Sall;
+namespace Sall.Ast;
 
 public enum BinaryOperation
 {
@@ -62,7 +60,9 @@ public enum Comp
     Ge,
 }
 
-public record Stylesheet(Variable[] Variables, AnonymousClass[] AnonymousClasses, NamedClass[] NamedClasses);
+public record Stylesheet(AstStylespace[] AstStylespaces);
+
+public record AstStylespace(string Ident, Variable[] Variables, AnonymousClass[] AnonymousClasses, NamedClass[] NamedClasses);
 
 public abstract record ExprOrValue;
 
@@ -137,8 +137,6 @@ public record NamedClass(
     Property[] Properties,
     AnonymousClass[] SubClasses)
     : Class(Parents, Properties, SubClasses), ISymbol;
-
-public record NormalizedClass(SelectorChain SelectorChain, Dictionary<string, Value> PropertyValues);
 
 public record Parent(string Ident, Args Args);
 

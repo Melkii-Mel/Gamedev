@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace Sall;
+namespace Sall.Ast;
 
 public static class OperatorMap
 {

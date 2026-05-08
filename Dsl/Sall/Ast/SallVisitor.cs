@@ -5,7 +5,7 @@ using System.Linq;
 using Antlr4.Runtime;
 using Antlr4.Runtime.Tree;
 
-namespace Sall;
+namespace Sall.Ast;
 
 public class SallVisitor
 {
