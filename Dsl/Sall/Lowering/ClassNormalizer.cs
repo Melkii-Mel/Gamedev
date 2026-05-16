@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
+using Attributes;
 using Sall.Api;
 using Sall.Ast;
 using Sall.Evaluation;
@@ -12,7 +14,7 @@ public record NormalizedClass(ValueSet<StringId> Markers, Dictionary<StringId, N
 public record NormalizedNamedClass(
     string Name,
     Dictionary<StringId, NormalizedProperty> Properties
-) : NormalizedClass([Name], Properties);
+) : NormalizedClass(new ValueSet<StringId>([Name]), Properties);
 
 public record NormalizedProperty(Scope Scope, string Ident, Expr Expr);
 
@@ -101,7 +103,7 @@ public class ClassNormalizer
         }
 
         foreach (var classes in anonymousClasses.Select(ac =>
-                     NormalizeAnonymousClass(ac, localScope, [className]).AnonymousClasses))
+                     NormalizeAnonymousClass(ac, localScope, new ValueSet<StringId>([className])).AnonymousClasses))
         {
             nestedClasses.AddRange(classes);
         }
@@ -124,20 +126,20 @@ public class ClassNormalizer
         return new NormalizedProperty(scope, property.Ident, property.Expr);
     }
 
-    private static ValueSet<StringId> SelectorChainToMarkers(SelectorChain selectorChain)
+    private static HashSet<StringId> SelectorChainToMarkers(SelectorChain selectorChain)
     {
         var selectors = selectorChain.Selectors;
-        var markers = new ValueSet<StringId>();
+        var markersSet = new HashSet<StringId>();
         foreach (var selectorsItem in selectors.Items)
         {
             if (selectorsItem is not AtomSelectorExpr
                 {
                     SelectorExprOrSelector: MarkerSelector markerSelector,
                 }) throw new NotSupportedException();
-            markers.Add(markerSelector.Ident);
+            markersSet.Add(markerSelector.Ident);
         }
 
-        return markers;
+        return markersSet;
     }
 
     // TODO: Generalize
@@ -161,21 +163,22 @@ public class ClassDeps : HashSet<string>
     }
 }
 
-public class ValueSet<T> : HashSet<T>
+[DelegateImplementation(typeof(IImmutableSet<>), nameof(_set))]
+public class ValueSet<T> : IImmutableSet<T>, IEnumerable<T>
 {
-    public void AddRange(ValueSet<T> other)
-    {
-        foreach (var v in other) Add(v);
-    }
+    private readonly HashSet<T> _set;
 
-    public void AddTo(ValueSet<T> other)
+    public static implicit operator ValueSet<T>(HashSet<T> set) => new(set);
+    public ValueSet(HashSet<T> set) => _set = [..set];
+
+    public void AddTo(HashSet<T> other)
     {
-        other.AddRange(this);
+        foreach (var t in _set) other.Add(t);
     }
 
     public static ValueSet<T> From(IEnumerable<T> enumerable)
     {
-        var result = new ValueSet<T>();
+        var result = new HashSet<T>();
         foreach (var item in enumerable)
         {
             result.Add(item);

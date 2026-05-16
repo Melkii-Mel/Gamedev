@@ -12,7 +12,7 @@ namespace Sall.Api;
 /// </summary>
 /// <param name="Classes"></param>
 public record Stylespace(
-    string Name,
+    StringId Name,
     Dictionary<string, Variable> Variables,
     Dictionary<string, NamedClass> NamedClasses,
     Dictionary<SelectorChain, Class> Classes,
@@ -22,36 +22,6 @@ public record Stylespace(
     private Scope? _scope;
     public Scope Scope => _scope ??= Scope.FromStylespace(this);
 
-    public static Stylespace FromStylesheets(Stylespace[] stylesheets)
-    {
-        var result = new Stylespace([], [], [], []);
-        foreach (var stylesheet in stylesheets)
-        {
-            foreach (var variable in stylesheet.Variables)
-            {
-                result.Variables.Add(variable.Ident, variable);
-            }
-
-            foreach (var anonymousClass in stylesheet.AnonymousClasses)
-            {
-                result.Classes.Add(anonymousClass.SelectorChain, anonymousClass);
-                result.AnonymousClasses.Add(anonymousClass.SelectorChain, anonymousClass);
-            }
-
-            foreach (var namedClass in stylesheet.NamedClasses)
-            {
-                result.Classes.Add(
-                    new SelectorChain(new ValueArray<SelectorExpr>([
-                        new AtomSelectorExpr(new MarkerSelector(namedClass.Ident)),
-                    ])),
-                    namedClass);
-                result.NamedClasses.Add(namedClass.Ident, namedClass);
-            }
-        }
-
-        return result;
-    }
-
     public void Append(Stylespace other)
     {
         JoinDict(NamedClasses, other.NamedClasses);
@@ -59,9 +29,9 @@ public record Stylespace(
         JoinDict(Classes, other.Classes);
         JoinDict(Variables, other.Variables);
         Scope.AddSymbolsFrom(other.Scope);
-        
+
         return;
-        
+
         void JoinDict<TKey, TValue>(Dictionary<TKey, TValue> to, Dictionary<TKey, TValue> from)
         {
             foreach (var kvp in from)
@@ -71,6 +41,7 @@ public record Stylespace(
                 {
                     throw new Exception();
                 }
+
                 to.Add(kvp.Key, kvp.Value);
             }
         }
@@ -81,39 +52,62 @@ public static class StylesheetExt
 {
     public static IEnumerable<Stylespace> ToApiStylespaces(this Stylesheet stylesheet)
     {
+        var stylespaceNames = new List<string>();
+        var stylespaces = new Dictionary<string, Stylespace>();
         foreach (var astStylespace in stylesheet.AstStylespaces)
         {
-            var result = new Stylespace([], [], [], []);
+            var ss = new Stylespace(astStylespace.Ident, [], [], [], []);
             foreach (var variable in astStylespace.Variables)
             {
-                result.Variables.Add(variable.Ident, variable);
+                ss.Variables.Add(variable.Ident, variable);
             }
 
             foreach (var anonymousClass in astStylespace.AnonymousClasses)
             {
-                result.Classes.Add(anonymousClass.SelectorChain, anonymousClass);
-                result.AnonymousClasses.Add(anonymousClass.SelectorChain, anonymousClass);
+                ss.Classes.Add(anonymousClass.SelectorChain, anonymousClass);
+                ss.AnonymousClasses.Add(anonymousClass.SelectorChain, anonymousClass);
             }
 
             foreach (var namedClass in astStylespace.NamedClasses)
             {
-                result.Classes.Add(
+                ss.Classes.Add(
                     new SelectorChain(new ValueArray<SelectorExpr>([
                         new AtomSelectorExpr(new MarkerSelector(namedClass.Ident)),
                     ])),
                     namedClass);
-                result.NamedClasses.Add(namedClass.Ident, namedClass);
+                ss.NamedClasses.Add(namedClass.Ident, namedClass);
             }
 
-            yield return result;
+            if (stylespaces.TryGetValue(ss.Name, out var otherSs))
+            {
+                otherSs.Append(ss);
+            }
+            else
+            {
+                stylespaceNames.Add(ss.Name);
+                stylespaces.Add(ss.Name, ss);
+            }
         }
+
+        return stylespaceNames.Select(s => stylespaces[s]);
     }
 
+    /// <summary>
+    /// Converts each stylesheet into a collection of Stylespaces and then merges these collections
+    /// </summary>
+    /// <param name="stylesheets"></param>
+    /// <returns></returns>
     public static IEnumerable<Stylespace> ToApiStylespaces(this IEnumerable<Stylesheet> stylesheets)
     {
         return stylesheets.Select(ss => ss.ToApiStylespaces()).Merge();
     }
 
+    /// <summary>
+    /// Merges multiple collections of <see cref="Stylespace"/> into a single collection,
+    /// combining entries with the same identifier.
+    /// </summary>
+    /// <param name="stylespaceGroups">A sequence of Stylespace collections to merge.</param>
+    /// <returns>A merged sequence of Stylespace objects.</returns>
     public static IEnumerable<Stylespace> Merge(this IEnumerable<IEnumerable<Stylespace>> stylespaceGroups)
     {
         List<Stylespace> mergedList = [];

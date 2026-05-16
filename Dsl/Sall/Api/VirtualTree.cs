@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http.Headers;
 using Sall.Evaluation;
 using Sall.Lowering;
 
@@ -14,20 +13,55 @@ public class DirtyNodesRegister : List<Node>;
 public record Node(
     Type Type,
     StringId[] Classes,
+    // TODO (later): Consider changing the data structure for children storage
     List<Node> Children,
-    Node Parent,
+    Node? Parent,
     List<Dependency> DirectDeps,
     List<Dependency> Dependents,
     NodeLayout NodeLayout
 )
 {
+    public event Action<Node>? ChildAddedRecursive;
+    public event Action<Node>? ChildRemoved;
     public ValueSet<StringId> Dirt = [];
 
+    public void AddChild(Node node)
+    {
+        Children.Add(node);
+        InvokeChildAdded(node);
+    }
+
+    public bool RemoveChild(Node node)
+    {
+        var removed = Children.Remove(node);
+        if (removed) InvokeChildRemoved(node);
+        return removed;
+    }
+
+    public void RemoveChild(int index)
+    {
+        var removed = Children[index];
+        Children.RemoveAt(index);
+        InvokeChildRemoved(removed);
+    }
+    
     public void AddDependency(Node node, StringId ofProp, StringId onProp)
     {
         DirectDeps.Add(new Dependency(node, ofProp, onProp));
         node.Dependents.Add(new Dependency(this, onProp, ofProp));
         // TODO: Invalidate or comment to call at the right moment
+    }
+
+    private void InvokeChildAdded(Node node)
+    {
+        ChildAddedRecursive?.Invoke(node);
+        Parent?.InvokeChildAdded(node);
+    }
+
+    private void InvokeChildRemoved(Node node)
+    {
+        ChildRemoved?.Invoke(node);
+        Parent?.InvokeChildRemoved(node);
     }
 
     /// <summary>
@@ -50,7 +84,8 @@ public record Node(
     {
         Dirt.Add(prop);
         dnr.Add(this);
-        foreach (var dependent in Dependents.Where(d => d.OnProperty == prop)) dependent.Node.Invalidate(dependent.OfProperty, dnr);
+        foreach (var dependent in Dependents.Where(d => d.OnProperty == prop))
+            dependent.Node.Invalidate(dependent.OfProperty, dnr);
     }
 
     /// <summary>
