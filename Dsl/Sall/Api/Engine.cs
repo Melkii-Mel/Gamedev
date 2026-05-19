@@ -21,9 +21,8 @@ public partial class Engine : IEngine
     private readonly Dictionary<StringId, Stylespace> _disabled = [];
     private readonly WeakSet<Node> _registered = [];
     private bool _reloadQueued;
-    private Dictionary<ValueSet<StringId>, List<StringId>> _signatureToStylesMap = [];
     private List<WeakReference<Node>> _dirtyNodes = [];
-    private MarkerIdIndex _markerIdIndex = new([]);
+    private MarkerIndex _markerIndex = new([]);
 
     public void QueueReload() => _reloadQueued = true;
 
@@ -59,10 +58,7 @@ public partial class Engine : IEngine
     private void SetDirtyRecursive(Node node)
     {
         _dirtyNodes.Add(new WeakReference<Node>(node));
-        foreach (var nodeChild in node.Children)
-        {
-            SetDirtyRecursive(nodeChild);
-        }
+        foreach (var nodeChild in node.Children) SetDirtyRecursive(nodeChild);
     }
 
     public void UnregisterNode(Node root)
@@ -84,34 +80,25 @@ public partial class Engine : IEngine
             Reload();
             return;
         }
-        
     }
 
     private void Reload()
     {
-        _markerIdIndex = new MarkerIdIndex()
-        foreach (var registeredNode in _registered)
-        {
-            ReloadNode(registeredNode);
-        }
+        var activeStylespaces = ActiveStylespaces();
+        _markerIndex = new MarkerIndex(activeStylespaces.SelectMany(s =>
+            new ClassNormalizer(s, s.Scope).NormalizeClassesFlat()));
+        foreach (var registeredNode in _registered) ReloadNode(registeredNode);
+    }
+
+    private Stylespace[] ActiveStylespaces()
+    {
+        return _stylespaces.Where(ss => !_disabled.ContainsKey(ss.Name)).ToArray();
     }
 
     private void ReloadNode(Node node)
     {
-        CacheClassesFor(node.Classes);
-        var classesToApply 
-        foreach (var child in node.Children)
-        {
-            ReloadNode(child);
-        }
-    }
-
-    private void CacheClassesFor(StringId[] nodeClasses)
-    {
-        for (var i = 0; i < nodeClasses.Length; i++)
-        {
-            
-        }
+        var classesToApply = _markerIndex.GetClassesFor(node.Markers);
+        foreach (var child in node.Children) ReloadNode(child);
     }
 }
 
@@ -128,7 +115,7 @@ public partial class Engine
 
     private void Apply(Node node)
     {
-        if (_normalizedClasses.TryGetValue(ValueSet<string>.From(node.Classes), out var list))
+        if (_normalizedClasses.TryGetValue(ValueSet<string>.From(node.Markers), out var list))
         {
             foreach (var normalizedClass in list)
             {

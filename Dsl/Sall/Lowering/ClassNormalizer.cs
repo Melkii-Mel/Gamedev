@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using Attributes;
 using Sall.Api;
@@ -38,7 +39,21 @@ public class ClassNormalizer
         return normalizedClasses;
     }
 
-    private IEnumerable<ClassBundle> NormalizeNamedClasses(Dictionary<string, NamedClass> namedClasses)
+    public IEnumerable<NormalizedClass> NormalizeClassesFlat()
+    {
+        foreach (var bundle in NormalizeNamedClasses(_stylespace.NamedClasses))
+        {
+            if (bundle.NamedClass != null) yield return bundle.NamedClass;
+            foreach (var c in bundle.AnonymousClasses)
+                yield return c;
+        }
+
+        foreach (var bundle in NormalizeAnonymousClasses(_stylespace.AnonymousClasses.Values))
+        foreach (var c in bundle.AnonymousClasses)
+            yield return c;
+    }
+
+    private IEnumerable<ClassBundle> NormalizeNamedClasses(Dictionary<StringId, NamedClass> namedClasses)
     {
         _classDeps = [];
         foreach (var namedClass in namedClasses)
@@ -84,7 +99,7 @@ public class ClassNormalizer
         return (normalizedProperties, nestedClasses);
     }
 
-    private ClassBundle NormalizeNamedClass(string className, Scope parentScope, Args? parentArgs)
+    private ClassBundle NormalizeNamedClass(StringId className, Scope parentScope, Args? parentArgs)
     {
         _classDeps.Add(className);
 
@@ -152,7 +167,7 @@ public class ClassNormalizer
     }
 }
 
-public class ClassDeps : HashSet<string>
+public class ClassDeps : HashSet<StringId>
 {
     public new void Add(string s)
     {
@@ -163,21 +178,12 @@ public class ClassDeps : HashSet<string>
     }
 }
 
-[DelegateImplementation(typeof(IImmutableSet<>), nameof(_set))]
-public class ValueSet<T> : IImmutableSet<T>, IEnumerable<T>
+public class ValueSet
 {
-    private readonly HashSet<T> _set;
-
-    public static implicit operator ValueSet<T>(HashSet<T> set) => new(set);
-    public ValueSet(HashSet<T> set) => _set = [..set];
-
-    public void AddTo(HashSet<T> other)
+    public static ValueSet<T> From<T>(IEnumerable<T> enumerable)
     {
-        foreach (var t in _set) other.Add(t);
-    }
+        if (enumerable is ValueSet<T> r) return r;
 
-    public static ValueSet<T> From(IEnumerable<T> enumerable)
-    {
         var result = new HashSet<T>();
         foreach (var item in enumerable)
         {
@@ -185,6 +191,25 @@ public class ValueSet<T> : IImmutableSet<T>, IEnumerable<T>
         }
 
         return result;
+    }
+}
+
+[DelegateImplementation(typeof(IImmutableSet<>), nameof(_set))]
+public class ValueSet<T> : ValueSet, IImmutableSet<T>, IEnumerable<T>
+{
+    private readonly HashSet<T> _set;
+
+    public static implicit operator ValueSet<T>(HashSet<T> set) => new(set);
+    public ValueSet(HashSet<T> set) => _set = [..set];
+
+    public bool IsSubsetOf(ValueSet<T> other)
+    {
+        return _set.All(other.Contains);
+    }
+
+    public void AddTo(HashSet<T> other)
+    {
+        foreach (var t in _set) other.Add(t);
     }
 
     public override int GetHashCode()

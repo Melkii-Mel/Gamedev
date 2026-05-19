@@ -6,25 +6,25 @@ using Sall.Lowering;
 
 namespace Sall;
 
-public class MarkerIdIndex
+/// <summary>
+/// Contains class markers and groups them, allowing faster and easier class querying
+/// </summary>
+public class MarkerIndex
 {
-    private readonly ValueSet<StringId>[] _markers;
-    public ImmutableDictionary<StringId, int> IdCountMap { get; private set; }
+    private readonly Dictionary<ValueSet<StringId>, NormalizedClass[]> _markersClassMap;
+    private readonly Dictionary<ValueSet<StringId>, List<NormalizedClass>> _markersClassCache = [];
+    public ImmutableDictionary<StringId, int> IdCountMap { get; }
     public ImmutableArray<int> Counts { get; private set; }
 
-    private Dictionary<ValueSet<StringId>, ValueSet<StringId>> _cache = [];
-
-    public MarkerIdIndex(ValueSet<StringId>[] markers)
+    public MarkerIndex(IEnumerable<NormalizedClass> classes)
     {
-        _markers = markers;
+        _markersClassMap = classes.GroupBy(c => c.Markers).Select(c => c.ToArray())
+            .ToDictionary(c => c.First().Markers);
         var idCountMapBuilder = ImmutableDictionary.CreateBuilder<StringId, int>();
-        foreach (var markerSet in markers)
+        foreach (var marker in _markersClassMap.Keys.SelectMany(markerSet => markerSet))
         {
-            foreach (var marker in markerSet)
-            {
-                idCountMapBuilder.TryGetValue(marker, out var c);
-                idCountMapBuilder[marker] = c + 1;
-            }
+            idCountMapBuilder.TryGetValue(marker, out var c);
+            idCountMapBuilder[marker] = c + 1;
         }
 
         IdCountMap = idCountMapBuilder.ToImmutable();
@@ -34,5 +34,16 @@ public class MarkerIdIndex
     public IOrderedEnumerable<StringId> OrderByFrequency(ValueSet<StringId> markers)
     {
         return markers.ToArray().OrderBy(m => IdCountMap[m]);
+    }
+
+    public IReadOnlyList<NormalizedClass> GetClassesFor(IEnumerable<StringId> nodeMarkers)
+    {
+        var vs = ValueSet.From(nodeMarkers);
+        if (_markersClassCache.TryGetValue(vs, out var classes)) return classes;
+        var matches = new List<NormalizedClass>();
+        foreach (var normalizedClasses in _markersClassMap.Where(normalizedClasses =>
+                     vs.IsSubsetOf(normalizedClasses.Key))) matches.AddRange(normalizedClasses.Value);
+        _markersClassCache[vs] = matches;
+        return matches;
     }
 }

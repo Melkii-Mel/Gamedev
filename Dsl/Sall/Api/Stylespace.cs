@@ -13,10 +13,10 @@ namespace Sall.Api;
 /// <param name="Classes"></param>
 public record Stylespace(
     StringId Name,
-    Dictionary<string, Variable> Variables,
-    Dictionary<string, NamedClass> NamedClasses,
-    Dictionary<SelectorChain, Class> Classes,
-    Dictionary<SelectorChain, AnonymousClass> AnonymousClasses
+    Dictionary<StringId, Variable> Variables,
+    Dictionary<StringId, NamedClass> NamedClasses,
+    Dictionary<ValueSet<StringId>, Class> Classes,
+    Dictionary<ValueSet<StringId>, AnonymousClass> AnonymousClasses
 )
 {
     private Scope? _scope;

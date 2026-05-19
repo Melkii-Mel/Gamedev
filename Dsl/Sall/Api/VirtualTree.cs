@@ -12,7 +12,7 @@ public class DirtyNodesRegister : List<Node>;
 
 public record Node(
     Type Type,
-    StringId[] Classes,
+    StringId[] Markers,
     // TODO (later): Consider changing the data structure for children storage
     List<Node> Children,
     Node? Parent,
