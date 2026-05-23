@@ -7,6 +7,7 @@ using Attributes;
 using Sall.Api;
 using Sall.Ast;
 using Sall.Evaluation;
+using Utils.Extensions;
 
 namespace Sall.Lowering;
 
@@ -240,8 +241,9 @@ public class NormalizedClasses : Dictionary<ValueSet<StringId>, List<NormalizedC
 
     public void RegisterClassBundle(ClassBundle classBundle)
     {
-        if (classBundle.NamedClass != null) (this[classBundle.NamedClass.Markers] ??= []).Add(classBundle.NamedClass);
-        foreach (var c in classBundle.AnonymousClasses) (this[c.Markers] ??= []).Add(c);
+        if (classBundle.NamedClass != null)
+            this.GetOrInit(classBundle.NamedClass.Markers, static () => []).Add(classBundle.NamedClass);
+        foreach (var c in classBundle.AnonymousClasses) this.GetOrInit(c.Markers, static () => []).Add(c);
     }
 
     public void RegisterClassBundles(

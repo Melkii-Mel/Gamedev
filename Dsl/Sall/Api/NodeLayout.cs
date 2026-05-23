@@ -1,4 +1,5 @@
-﻿namespace Sall.Api;
+﻿// TODO: (Soon) Consider deleting
+namespace Sall.Api;
 
 public class NodeConstraints
 {

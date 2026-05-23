@@ -1,39 +1,90 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using Sall.Evaluation;
 using Sall.Lowering;
+using Sall.Properties;
+using Utils.Extensions;
 
 namespace Sall.Api;
 
-public record struct Dependency(Node Node, StringId OfProperty, StringId OnProperty);
+public class TreeContext
+{
+    internal Dictionary<Node, List<Dependency>> DependenciesMap { get; } = [];
+}
+
+public enum DependencyDirection
+{
+    Parent,
+    Children,
+}
+
+public record struct Dependency(DependencyDirection Direction, StringId OfProperty, StringId OnProperty);
 
 public class DirtyNodesRegister : List<Node>;
 
-public record Node(
-    Type Type,
-    StringId[] Markers,
-    // TODO (later): Consider changing the data structure for children storage
-    List<Node> Children,
-    Node? Parent,
-    List<Dependency> DirectDeps,
-    List<Dependency> Dependents,
-    NodeLayout NodeLayout
-)
+public class Node
 {
+    // !!! Consider alternative
+    public Type Type { get; }
+    public IReadOnlyList<StringId> Markers => _markers;
+    public IReadOnlyList<Node> Children => _children;
+    public Node? Parent { get; private set; }
+    public TreeContext Context { get; private set; }
+
+    public Properties Properties
+    {
+        get => _properties;
+        private set => _properties = value;
+    }
+
+    private List<StringId> _markers { get; } = [];
+    private List<Node> _children { get; } = [];
+    private Properties _properties;
+
     public event Action<Node>? ChildAddedRecursive;
     public event Action<Node>? ChildRemoved;
-    public ValueSet<StringId> Dirt = [];
 
+    public void Update(float delta)
+    {
+        
+    }
+
+    public void Recompute(StringId property)
+    {
+        var selfValue = GetClassPropertyValue(property);
+        switch (PropertyBehaviorMap.GetBehavior(property))
+        {
+            case PropertyBehavior.Inherited:
+                break;
+            case PropertyBehavior.Accumulated:
+                Properties[property] = Parent?.Properties[property] * selfValue;
+                break;
+            case PropertyBehavior.SelfOnly:
+                break;
+            case PropertyBehavior.Layout:
+                break;
+            case PropertyBehavior.Subtree:
+                break;
+            case PropertyBehavior.Context:
+                break;
+            default:
+                throw new ArgumentOutOfRangeException();
+        }
+    }
+    
     public void AddChild(Node node)
     {
-        Children.Add(node);
+        _children.Add(node);
+        HandleChildAdded(node);
         InvokeChildAdded(node);
     }
 
     public bool RemoveChild(Node node)
     {
-        var removed = Children.Remove(node);
+        var removed = _children.Remove(node);
+        HandleChildRemoved(node);
         if (removed) InvokeChildRemoved(node);
         return removed;
     }
@@ -41,10 +92,38 @@ public record Node(
     public void RemoveChild(int index)
     {
         var removed = Children[index];
-        Children.RemoveAt(index);
+        _children.RemoveAt(index);
+        HandleChildRemoved(removed);
         InvokeChildRemoved(removed);
     }
-    
+
+    private void HandleChildAdded(Node node)
+    {
+    }
+
+    private void HandleChildRemoved(Node node)
+    {
+        foreach (var childrenDependency in ChildrenDependencies())
+        {
+            childrenDependency
+        }
+    }
+
+    private IEnumerable<Dependency> ParentDependencies()
+    {
+        return Context.DependenciesMap[this].Where(d => d.Direction == DependencyDirection.Parent);
+    }
+
+    private IEnumerable<Dependency> ChildrenDependencies()
+    {
+        return Dependencies().Where(d => d.Direction == DependencyDirection.Children);
+    }
+
+    private List<Dependency> Dependencies()
+    {
+        return Context.DependenciesMap.GetOrInit(this, static () => []);
+    }
+
     public void AddDependency(Node node, StringId ofProp, StringId onProp)
     {
         DirectDeps.Add(new Dependency(node, ofProp, onProp));
