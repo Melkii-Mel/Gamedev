@@ -12,7 +12,11 @@ namespace Sall;
 public class MarkerIndex
 {
     private readonly Dictionary<ValueSet<StringId>, NormalizedClass[]> _markersClassMap;
-    private readonly Dictionary<ValueSet<StringId>, List<NormalizedClass>> _markersClassCache = [];
+
+    private readonly
+        Dictionary<ValueSet<StringId>, (List<NormalizedClass> ClassesList, ValueSet<NormalizedClass> ClassesSet)>
+        _markersClassCache = [];
+
     public ImmutableDictionary<StringId, int> IdCountMap { get; }
     public ImmutableArray<int> Counts { get; private set; }
 
@@ -36,14 +40,16 @@ public class MarkerIndex
         return markers.ToArray().OrderBy(m => IdCountMap[m]);
     }
 
-    public IReadOnlyList<NormalizedClass> GetClassesFor(IEnumerable<StringId> nodeMarkers)
+    public (IReadOnlyList<NormalizedClass> classesList, ValueSet<NormalizedClass> classesSet) GetClassesFor(
+        IEnumerable<StringId> nodeMarkers)
     {
         var vs = ValueSet.From(nodeMarkers);
         if (_markersClassCache.TryGetValue(vs, out var classes)) return classes;
         var matches = new List<NormalizedClass>();
         foreach (var normalizedClasses in _markersClassMap.Where(normalizedClasses =>
                      vs.IsSubsetOf(normalizedClasses.Key))) matches.AddRange(normalizedClasses.Value);
-        _markersClassCache[vs] = matches;
-        return matches;
+        var result = (matches, ValueSet.From(matches));
+        _markersClassCache[vs] = result;
+        return result;
     }
 }

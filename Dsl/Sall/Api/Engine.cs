@@ -98,6 +98,8 @@ public partial class Engine : IEngine
 
     private void ReloadNode(Node node)
     {
+        // TODO (now): Consider replacing it with something like node.Reload()
+        
         var classesToApply = _markerIndex.GetClassesFor(node.Markers);
         foreach (var child in node.Children) ReloadNode(child);
     }

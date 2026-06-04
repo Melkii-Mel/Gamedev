@@ -213,10 +213,9 @@ public class ValueSet<T> : ValueSet, IImmutableSet<T>, IEnumerable<T>
         foreach (var t in _set) other.Add(t);
     }
 
-    public override int GetHashCode()
-    {
-        return this.Sum(i => i?.GetHashCode() ?? 0);
-    }
+    public override int GetHashCode() => this.Sum(i => i?.GetHashCode() ?? 0);
+
+    public IImmutableSet<T> Except(ValueSet<T> other) => (this as IImmutableSet<T>).Except(other);
 
     public bool Equals(ValueSet<T>? other)
     {
@@ -224,10 +223,7 @@ public class ValueSet<T> : ValueSet, IImmutableSet<T>, IEnumerable<T>
         return GetHashCode() == other.GetHashCode();
     }
 
-    public override bool Equals(object? obj)
-    {
-        return obj is ValueSet<T> vs && Equals(vs);
-    }
+    public override bool Equals(object? obj) => obj is ValueSet<T> vs && Equals(vs);
 }
 
 public class NormalizedClasses : Dictionary<ValueSet<StringId>, List<NormalizedClass>>

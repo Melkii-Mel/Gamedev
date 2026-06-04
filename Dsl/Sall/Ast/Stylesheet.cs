@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Sall.Evaluation;
 
 namespace Sall.Ast;
 
@@ -121,26 +122,30 @@ public record Call(string Ident, Args Args) : Value;
 
 public record VariableRef(string Ident) : Value;
 
-public abstract record Class(Parent[] Parents, Property[] Properties, AnonymousClass[] SubClasses);
+public abstract record Class(Parent[] Parents, Property[] Properties, Transition[] Transitions, AnonymousClass[] SubClasses);
 
 public record AnonymousClass(
     SelectorChain SelectorChain,
     Parent[] Parents,
     Property[] Properties,
+    Transition[] Transitions,
     AnonymousClass[] SubClasses)
-    : Class(Parents, Properties, SubClasses);
+    : Class(Parents, Properties, Transitions, SubClasses);
 
 public record NamedClass(
     string Ident,
     Param[] Params,
     Parent[] Parents,
     Property[] Properties,
+    Transition[] Transitions,
     AnonymousClass[] SubClasses)
-    : Class(Parents, Properties, SubClasses), ISymbol;
+    : Class(Parents, Properties, Transitions, SubClasses), ISymbol;
 
 public record Parent(string Ident, Args Args);
 
 public record Property(string Ident, Expr Expr);
+
+public record Transition(StringId Ident, Expr Expr, StringId? Easing, Expr? Delay);
 
 public abstract record Selector : SelectorExprOrSelector;
 

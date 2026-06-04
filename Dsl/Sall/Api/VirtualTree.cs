@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
+using System.Collections.Immutable;
 using System.Linq;
 using Sall.Evaluation;
 using Sall.Lowering;
@@ -9,9 +9,15 @@ using Utils.Extensions;
 
 namespace Sall.Api;
 
-public class TreeContext
+internal class TreeContext
 {
-    internal Dictionary<Node, List<Dependency>> DependenciesMap { get; } = [];
+    public TreeContext(MarkerIndex markerIndex)
+    {
+        MarkerIndex = markerIndex;
+    }
+
+    public Dictionary<Node, List<Dependency>> DependenciesMap { get; } = [];
+    public MarkerIndex MarkerIndex { get; init; }
 }
 
 public enum DependencyDirection
@@ -24,6 +30,17 @@ public record struct Dependency(DependencyDirection Direction, StringId OfProper
 
 public class DirtyNodesRegister : List<Node>;
 
+// TODO (now): Add properties here
+internal struct NodeState
+{
+    public bool MarkersAdded, MarkerRemoved;
+
+    public void Reset()
+    {
+        this = new NodeState();
+    }
+}
+
 public class Node
 {
     // !!! Consider alternative
@@ -31,7 +48,7 @@ public class Node
     public IReadOnlyList<StringId> Markers => _markers;
     public IReadOnlyList<Node> Children => _children;
     public Node? Parent { get; private set; }
-    public TreeContext Context { get; private set; }
+    internal TreeContext Context { get; private set; }
 
     public Properties Properties
     {
@@ -42,13 +59,48 @@ public class Node
     private List<StringId> _markers { get; } = [];
     private List<Node> _children { get; } = [];
     private Properties _properties;
+    private NodeState _nodeState = new();
+    private (IReadOnlyList<NormalizedClass> list, ValueSet<NormalizedClass> set) _classes;
 
     public event Action<Node>? ChildAddedRecursive;
     public event Action<Node>? ChildRemoved;
 
     public void Update(float delta)
     {
-        
+        Context.DependenciesMap
+
+        if (_nodeState.MarkerRemoved || _nodeState.MarkersAdded)
+        {
+            UpdateMarkers();
+        }
+
+        _nodeState.Reset();
+
+        return;
+
+        void UpdateMarkers()
+        {
+            var oldClasses = _classes;
+            _classes = Context.MarkerIndex.GetClassesFor(_markers);
+
+            // TODO (later): Add priorities to property setters (or to classes) for more predictable behavior
+            
+            if (_nodeState.MarkersAdded)
+            {
+                var addedClasses = _classes.set.Except(oldClasses.set);
+                foreach (var propKvp in addedClasses.SelectMany(ac => ac.Properties))
+                {
+                    var name = propKvp.Key;
+                    var property = propKvp.Value;
+                    _properties.Add(name, property);
+                }
+            }
+
+            if (_nodeState.MarkerRemoved)
+            {
+                var removedClasses = oldClasses.set.Except(_classes.set);
+            }
+        }
     }
 
     public void Recompute(StringId property)
@@ -73,7 +125,7 @@ public class Node
                 throw new ArgumentOutOfRangeException();
         }
     }
-    
+
     public void AddChild(Node node)
     {
         _children.Add(node);
