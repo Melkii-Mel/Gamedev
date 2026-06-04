@@ -21,4 +21,12 @@ public static class DictionaryExtensions
         dict[key] = value;
         return value;
     }
+
+    public static List<TValue> GetOrInit<TKey, TValue>(this Dictionary<TKey, List<TValue>> dict, TKey key)
+    {
+        if (dict.TryGetValue(key, out var value)) return value;
+        value = [];
+        dict[key] = value;
+        return value;
+    }
 }

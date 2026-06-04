@@ -81,6 +81,10 @@ public interface INormalizedValue;
 
 public abstract record Value : ExprOrValue;
 
+public record Array(Expr[] Expressions) : Value;
+
+public record NormalizedArray(INormalizedValue[] NormalizedValues) : Value, INormalizedValue;
+
 public record Bool(bool Value) : Value, INormalizedValue;
 
 public abstract record Number : Value;
@@ -122,7 +126,7 @@ public record Call(string Ident, Args Args) : Value;
 
 public record VariableRef(string Ident) : Value;
 
-public abstract record Class(Parent[] Parents, Property[] Properties, Transition[] Transitions, AnonymousClass[] SubClasses);
+public abstract record Class(Parent[] Parents, Property[] Properties, Transition[] Transitions, Animation[] Animations, AnonymousClass[] SubClasses);
 
 public record AnonymousClass(
     SelectorChain SelectorChain,
@@ -146,6 +150,14 @@ public record Parent(string Ident, Args Args);
 public record Property(string Ident, Expr Expr);
 
 public record Transition(StringId Ident, Expr Expr, StringId? Easing, Expr? Delay);
+
+public record Animation(StringId Ident, Keyframe[] Keyframes);
+
+public record Keyframe(Expr time, ) : Value;
+
+// TODO: C = A + B. on A update. Mark each of A's dependencies (in this case C and all C dependencies) as dirty. on Update. foreach dependency of C check if not dirty (I.e. all the values are calculated. If not, update them first), THEN update C's value.
+
+public record NormalizedKeyframe(Double Time, INormalizedValue Value) : Value, INormalizedValue;
 
 public abstract record Selector : SelectorExprOrSelector;
 

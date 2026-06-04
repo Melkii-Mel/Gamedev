@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using Sall.Ast;
 using Sall.Evaluation;
 using Sall.Lowering;
 using Utils.Extensions;
@@ -7,8 +8,11 @@ namespace Sall.Api;
 
 public class Properties
 {
-    public Dictionary<StringId, List<NormalizedProperty>> _propertyMap = [];
-    public HashSet<StringId> _dirtyProperties = [];
+    private Dictionary<StringId, List<NormalizedProperty>> _propertyMap = [];
+    private HashSet<StringId> _dirtyProperties = [];
+
+    // 
+    private Dictionary<StringId, List<Transition>> _transitions = [];
     // TODO: Animations property
     // TODO: Transitions property
 
@@ -19,7 +23,13 @@ public class Properties
 
     public void Add(StringId name, NormalizedProperty property)
     {
-        _propertyMap.GetOrInit(name, () => []).Add(property);
+        _propertyMap.GetOrInit(name).Add(property);
+        _dirtyProperties.Add(name);
+    }
+
+    public void Remove(StringId name, NormalizedProperty property)
+    {
+        _propertyMap.GetOrInit(name).Remove(property);
         _dirtyProperties.Add(name);
     }
 
@@ -27,8 +37,13 @@ public class Properties
     {
         foreach (var dirtyProperty in _dirtyProperties)
         {
-            if (HandleTransitionIfExists(dirtyProperty)) continue;
-            
+            if (TryGetTransition(dirtyProperty, out var propertyTransition))
+            {
+                HandleTransition(propertyTransition);
+                continue;
+            }
+
+            UpdateProperty(dirtyProperty);
         }
 
         // TODO: Handle animations
@@ -36,7 +51,12 @@ public class Properties
         
         return;
 
-        bool HandleTransitionIfExists(StringId propertyId)
+        bool TryGetTransition(StringId propertyId, out PropertyTransition propertyTransition)
+        {
+            
+        }
+
+        void HandleTransition(PropertyTransition propertyTransition)
         {
             
         }
