@@ -8,7 +8,10 @@ file: statement*;
 
 statement: variable | namedClassDef | anonymousClassDef;
 
-variable: 'let' IDENT params? '=' expr ';';
+variable: 'let' IDENT params? '=' (expr | variableBody) ';';
+variableBody: '{' (variableStatement)* variableResult '}';
+variableStatement: (variable | expr) ';';
+variableResult: expr | ('return' expr ';');
 
 namedClassDef: className classContent;
 anonymousClassDef: selectorExpr classContent;
@@ -44,7 +47,9 @@ l2SelOp: '&&';
 l3SelOp: '||';
 
 params: '(' paramList? ')';
-args: '(' expr (',' expr)* ','? ')';
+args: '(' exprOrNamed (',' exprOrNamed)* ','? ')';
+exprOrNamed: namedExpr | expr;
+namedExpr: IDENT '=' expr;
 
 classBodyItem: property ';' | anonymousClassDef;
 classNameOrSelectorExpr: className | selectorExpr;

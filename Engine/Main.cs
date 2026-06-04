@@ -55,13 +55,13 @@ public interface IEngine
     ///     An event that should be invoked on each Update of the root entity, which is the entity that is not supposed to be
     ///     removed during the runtime
     /// </summary>
-    public event Action<double>? Update;
+    public event Action<float>? Update;
 
     /// <summary>
     ///     An event that should be invoked on each Physics Update of the root entity, which is the entity that is not supposed
     ///     to be removed during the runtime
     /// </summary>
-    public event Action<double>? PhysicsUpdate;
+    public event Action<float>? PhysicsUpdate;
 
     // TODO: Consider removing
     public void Spawn(IEntity entity, IEntity parent);
@@ -166,7 +166,7 @@ public class Engine
     public IApplication Application { get; set; }
     public Music Music { get; set; }
 
-    public event Action<double>? Update;
+    public event Action<float>? Update;
     public event Action<double>? PhysicsUpdate;
 
     private RootGroup InitGlobalRoot()

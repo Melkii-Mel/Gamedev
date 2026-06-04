@@ -54,13 +54,8 @@ public static class MenuUtils
 
     public static class GenericMenus
     {
-        public static SceneRoot LevelSelectMenu(IEnumerable<ILevel> levels)
-        {
-            throw new NotImplementedException();
-        }
-
-        public static SceneRoot LevelSelectMenu<TLevel>(IEnumerable<TLevel> levels,
-            Func<TLevel, IControl> levelDisplayOverride) where TLevel : ILevel
+        public static SceneRoot LevelSelectMenu<TLevel>(IEnumerable<TLevel> levels, Action<TLevel> onLevelSelect,
+            Func<TLevel, IControl>? levelDisplayOverride = null) where TLevel : ILevel
         {
             throw new NotImplementedException();
         }

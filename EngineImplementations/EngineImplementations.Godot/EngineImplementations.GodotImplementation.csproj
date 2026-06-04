@@ -9,6 +9,8 @@
     <ItemGroup>
         <ProjectReference Include="..\..\Engine\Engine.csproj"/>
         <ProjectReference Include="..\..\Primitives\Primitives.csproj"/>
+        <ProjectReference Include="..\..\Attributes\Attributes\Attributes.csproj"/>
+        <ProjectReference Include="..\..\Attributes\DelegateImplementation\DelegateImplementation.csproj" ReferenceOutputAssembly="false" OutputItemType="Analyzer"/>
         <PackageReference Include="Godot.NET.Sdk" Version="3.3.0"/>
     </ItemGroup>
 

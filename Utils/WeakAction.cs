@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using Utils.DataStructures;
+using Utils.Collections;
 
 namespace Utils;
 

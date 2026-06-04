@@ -1,0 +1,126 @@
+using System;
+using Attributes;
+using Gamedev;
+using Gamedev.Entities;
+using Gamedev.Localization;
+using Gamedev.Resources;
+using Godot;
+using Color = Primitives.Color;
+
+namespace EngineImplementations.GodotImplementation.EntitiesImplementations.Components;
+
+[DelegateImplementation(typeof(IControl), nameof(Control))]
+public partial class CTextField : ITextField
+{
+    private readonly DynamicFont _font;
+    private readonly Label _textField;
+    private FontData _currentFontData;
+
+    private Text? _text;
+
+    public CTextField(Label textField)
+    {
+        var registry = EngineInstance.E.Resources.FontRegistry;
+        _currentFontData = registry.DefaultFont;
+        var defaultFontPath = _currentFontData.Path;
+        _textField = textField;
+        _font = new DynamicFont
+        {
+            FontData = new DynamicFontData
+            {
+                FontPath = defaultFontPath,
+            },
+        };
+        _textField.AddFontOverride("font", _font);
+        Control = new CControl(textField);
+    }
+
+    public IControl Control { get; }
+
+    public Text? Text
+    {
+        get => _text;
+        set
+        {
+            if (_text != null) _text.OnUpdate -= Update;
+            _text = value;
+            if (_text != null) _text.OnUpdate += Update;
+            _textField.Text = _text ?? "";
+            
+            return;
+
+            void Update(string newValue)
+            {
+                _textField.Text = newValue;
+            }
+        }
+    }
+
+    public float FontSize
+    {
+        get => _font.Size;
+        set => _font.Size = (int)value;
+    }
+
+    public string FontFamily
+    {
+        get => _currentFontData.Name;
+        set
+        {
+            _currentFontData = EngineInstance.E.Resources.FontRegistry.ByName(value) ?? _currentFontData;
+            _font.FontData.FontPath = _currentFontData.Path;
+        }
+    }
+
+    public Color Color
+    {
+        get => _textField.GetColor("font_color").ToPrimitives();
+        set => _textField.AddColorOverride("font_color", value.ToGd());
+    }
+
+    public HAlignment HAlignment
+    {
+        get => _textField.Align switch
+        {
+            Label.AlignEnum.Left => HAlignment.Left,
+            Label.AlignEnum.Center => HAlignment.Center,
+            Label.AlignEnum.Right => HAlignment.Right,
+            Label.AlignEnum.Fill => HAlignment.Stretch,
+            _ => throw new NotImplementedException(),
+        };
+        set => _textField.Align = value switch
+        {
+            HAlignment.Left => Label.AlignEnum.Left,
+            HAlignment.Center => Label.AlignEnum.Center,
+            HAlignment.Right => Label.AlignEnum.Right,
+            HAlignment.Stretch => Label.AlignEnum.Fill,
+            _ => throw new NotImplementedException(),
+        };
+    }
+
+    public VAlignment VAlignment
+    {
+        get => _textField.Valign switch
+        {
+            Label.VAlign.Top => VAlignment.Top,
+            Label.VAlign.Center => VAlignment.Center,
+            Label.VAlign.Bottom => VAlignment.Bottom,
+            Label.VAlign.Fill => VAlignment.Stretch,
+            _ => throw new NotImplementedException(),
+        };
+        set => _textField.Valign = value switch
+        {
+            VAlignment.Top => Label.VAlign.Top,
+            VAlignment.Center => Label.VAlign.Center,
+            VAlignment.Bottom => Label.VAlign.Bottom,
+            VAlignment.Stretch => Label.VAlign.Fill,
+            _ => throw new NotImplementedException(),
+        };
+    }
+
+    public bool AutoWrap
+    {
+        get => _textField.Autowrap;
+        set => _textField.Autowrap = value;
+    }
+}
